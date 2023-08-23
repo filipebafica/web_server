@@ -1,2 +1,8 @@
+<<<<<<< HEAD
 /cmake-build-debug/CMakeFiles/clion-Debug-log.txt
 /.idea/workspace.xml
+=======
+/cmake-build-debug
+/.idea
+CMakeLists.txt
+>>>>>>> feature/3
