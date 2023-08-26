@@ -35,15 +35,14 @@ public:
         close(this->serverSocket);
 
         // Close all client sockets
-        for (int clientSocket : clientSockets) {
-            close(clientSocket);
+        for (std::vector<int>::iterator it = this->clientSockets.begin(); it != this->clientSockets.end(); ++it) {
+            close(*it);
         }
     }
 
     void startListening() {
-        // Listen for incoming connections on the server socket
-        listen(this->serverSocket, 5);
-        std::cout << "Server listening on port 8088" << std::endl;
+        // Prepare server socket to accept calls
+        this->makeServerSocketListen();
 
         while (true) {
             // Update the list of file descriptors to poll
@@ -62,13 +61,31 @@ public:
             }
 
             // Handle requests from existing clients
-            this->handleClientRequests();
+            this->handleRequests();
         }
     }
 
 private:
     int createSocket() {
-        // Create a socket using the IPv4 address family and TCP socket type
+        /*  Creates a socket using the IPv4 address family and TCP socket type.
+            Returns the socket descriptor if the creation is successful.
+            If an error occurs during socket creation, an error message is printed,
+            and the program may exit with a non-zero status.
+
+            - SOCKET:
+              - A socket is a programming interface enabling communication between processes
+              on different devices over networks. It functions as an endpoint for data exchange
+              across networks, whether local or Internet-based
+
+            - AF_INET:
+              - AF stands for Address Family.
+              - AF_INET corresponds to the IPv4 address family.
+
+            - SOCK_STREAM:
+              - SOCK stands for Socket Type.
+              - SOCK_STREAM corresponds to a stream-oriented socket (guarantee the order).
+        */
+
         int socketDescriptor = socket(AF_INET, SOCK_STREAM, 0);
         if (socketDescriptor < 0) {
             std::cerr << "Error creating socket" << std::endl;
@@ -78,24 +95,66 @@ private:
     }
 
     void setupServerAddress() {
-        // Set up the server address struct
+        /*  Sets up the server address structure.
+            This function configures the server address struct for
+            subsequent binding to the server socket.
+
+            - SIN_FAMILY: Address Family.
+              AF_INET corresponds to the IPv4 address family.
+
+            - SIN_PORT: Port number in network byte order.
+              htons() converts the port to network byte order.
+                - Host Byte Order: This refers to the byte order used by the computer's architecture.
+                For example, on x86-based systems, the host byte order is typically little-endian,
+                meaning the least significant byte comes first.
+
+                - Network Byte Order: This is a standardized byte order used in network communication.
+                It's big-endian, meaning the most significant byte comes first.
+
+            - SIN_ADDR.S_ADDR: IP address of the host.
+              INADDR_ANY allows binding to all available interfaces.
+        */
+
         this->serverAddress.sin_family = AF_INET;
         this->serverAddress.sin_port = htons(8088);
         this->serverAddress.sin_addr.s_addr = INADDR_ANY;
     }
 
     void bindServerSocket() {
-        // Bind the server socket to the specified address
-        if (bind(this->serverSocket, (struct sockaddr*)&this->serverAddress, sizeof(this->serverAddress)) < 0) {
+        /*  Binds the server socket to a specified address.
+            This function associates the server socket with the preconfigured
+            server address structure for communication.
+
+            If binding fails, an error message is printed, and
+            the program may exit with a non-zero status.
+        */
+
+        int bindToSocket = bind(
+                this->serverSocket,
+                (struct sockaddr*)&this->serverAddress,
+                sizeof(this->serverAddress)
+            );
+
+        if (bindToSocket < 0) {
             std::cerr << "Error binding socket" << std::endl;
             exit(1);
         }
+    }
+
+    void makeServerSocketListen() {
+        /*  Marks the socket referred to by sockfd as a passive socket, that is,
+            as a socket that will be used to accept incoming connection requests using accept.
+        */
+
+        listen(this->serverSocket, 5);
+        std::cout << "Server listening on port 8088" << std::endl;
     }
 
     void readRequest(int clientSocket) {
         // Clear the buffer and read data from the client socket
         std::memset(this->buffer, 0, sizeof(this->buffer));
         int bytesRead = read(clientSocket, this->buffer, sizeof(this->buffer));
+
         if (bytesRead < 0) {
             std::cerr << "Error reading request" << std::endl;
         } else if (bytesRead == 0) {
@@ -120,8 +179,32 @@ private:
     }
 
     void updatePollFds() {
-        // Update the list of file descriptors to poll
-        this->pollFds = this->createPollFds();
+        /*  Updates the list of file descriptors to be polled.
+            This function adds both the server socket and client sockets to
+            the list for monitoring input events (POLLIN/POLLOUT).
+
+            - POLLIN: Is used to check if there is data available to be read
+            from a file descriptor (such as a socket).
+
+            - POLLOUT: is used to check if you can write data to a file descriptor without blocking.
+        */
+
+        // Clear all the fds in the pollFds vector
+        this->pollFds.clear();
+
+        // Add the server socket to the list of file descriptors to poll
+        struct pollfd serverPollFd;
+        serverPollFd.fd = this->serverSocket;
+        serverPollFd.events = POLLIN | POLLOUT;
+        this->pollFds.push_back(serverPollFd);
+
+        // Add each client socket to the list
+        for (std::vector<int>::iterator it = this->clientSockets.begin(); it != this->clientSockets.end(); ++it) {
+            struct pollfd clientPollFd;
+            clientPollFd.fd = *it;
+            clientPollFd.events = POLLIN | POLLOUT;
+            this->pollFds.push_back(clientPollFd);
+        }
     }
 
     int pollEvents() {
@@ -135,52 +218,44 @@ private:
     }
 
     void handleNewConnection() {
-        // Accept a new client connection
+        /*  Handles a new incoming client connection.
+            This function accepts a client connection on the server socket.
+            It adds the client socket descriptor to the list of client sockets.
+            If an error occurs during connection acceptance, an error message is printed,
+            and the function returns.
+        */
+
         socklen_t clientAddressSize = sizeof(this->serverAddress);
-        int clientSocket = accept(this->serverSocket, (struct sockaddr*)&this->serverAddress, &clientAddressSize);
+        int clientSocket = accept(
+                this->serverSocket,
+                (struct sockaddr*)&this->serverAddress,
+                &clientAddressSize
+            );
+
         if (clientSocket < 0) {
             std::cerr << "Error accepting connection" << std::endl;
-        } else {
-            // Add the new client socket to the list
-            this->clientSockets.push_back(clientSocket);
+            return;
         }
+
+        // Add the new client socket to the list
+        this->clientSockets.push_back(clientSocket);
     }
 
-    void handleClientRequests() {
+    void handleRequests() {
         // Handle requests from existing client sockets
+        //starts from 1 because the index 0 is reserved for the server
         for (size_t i = 1; i < this->pollFds.size(); ++i) {
             if (this->pollFds[i].revents & POLLIN) {
-                // Check if the client socket has events to read data
-                int clientSocket = this->pollFds[i].fd;
-                this->readRequest(clientSocket);
+
+                this->readRequest(this->pollFds[i].fd);
                 this->processRequest();
-                this->sendResponse(clientSocket);
-                close(clientSocket);
+                this->sendResponse(this->pollFds[i].fd);
+                close(this->pollFds[i].fd);
+
                 // Remove the client socket after handling
                 this->clientSockets.erase(clientSockets.begin() + i - 1);
             }
         }
-    }
-
-    std::vector<struct pollfd> createPollFds() {
-        // Create a list of pollfd structures for polling
-        std::vector<struct pollfd> pollFds;
-
-        // Add the server socket to the list of file descriptors to poll
-        struct pollfd serverPollFd;
-        serverPollFd.fd = this->serverSocket;
-        serverPollFd.events = POLLIN;
-        pollFds.push_back(serverPollFd);
-
-        // Add each client socket to the list
-        for (std::vector<int>::iterator it = this->clientSockets.begin(); it != this->clientSockets.end(); ++it) {
-            struct pollfd clientPollFd;
-            clientPollFd.fd = *it;
-            clientPollFd.events = POLLIN;
-            pollFds.push_back(clientPollFd);
-        }
-
-        return pollFds;
     }
 };
 
