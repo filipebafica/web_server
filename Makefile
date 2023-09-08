@@ -1,11 +1,11 @@
 NAME = webserver
 INCLUDES = ./src/Interfaces
-SOURCE = main.cpp HttpRequestParser.cpp
+SOURCE = main.cpp ConfigHandler.cpp HttpRequestHandler.cpp HttpResponseHandler.cpp
 OBJECTS_DIR = ./objects/
 OBJECTS = $(SOURCE:%.cpp=$(OBJECTS_DIR)%.o)
 CC = c++
 #FLAGS = -g -Wall -Wextra -Werror -std=c++98
-VPATH = ./src/ ./src/Request
+VPATH = ./src/ ./src/Config ./src/Request ./src/Response
 
 
 all: $(NAME)
