@@ -6,21 +6,33 @@
 #include <csignal>
 #include <sys/poll.h>
 #include <vector>
-#include "./Request/HttpRequestParser.cpp"
+#include <string>
+#include "./Config/ConfigHandler.cpp"
+#include "./Request/HttpRequestHandler.cpp"
+#include "./Response/HttpResponseHandler.cpp"
 
 class Webserver {
 private:
+    IConfigHandler* configHandler;
+    IHttpRequestHandler* httpRequestHandler;
+    IHttpResponseHandler* httpResponseHandler;
     int serverSocket;
     struct sockaddr_in serverAddress;
     char buffer[1024];
     std::vector<int> clientSockets;
     std::vector<struct pollfd> pollFds; // Stores the file descriptors for polling
-    IParser* parser;
+
 
 public:
-    Webserver(IParser* parser){
-        // Inject parser
-        this->parser = parser;
+    Webserver(
+            IConfigHandler* configHandler,
+            IHttpRequestHandler* httpRequestHandler,
+            IHttpResponseHandler* httpResponseHandler
+    ) {
+        // Inject dependencies
+        this->configHandler = configHandler;
+        this->httpRequestHandler = httpRequestHandler;
+        this->httpResponseHandler = httpResponseHandler;
 
         // Create the server socket
         this->serverSocket = this->createSocket();
@@ -165,20 +177,34 @@ private:
         } else if (bytesRead == 0) {
             std::cerr << "Client disconnected" << std::endl;
         }
-
-        this->parser->parse(this->buffer);
-        std::map<std::string, std::string> headers = this->parser->getHeaders();
     }
 
     void processRequest() {
-        // Process and display the received request
+        // Parses received request
+        this->httpRequestHandler->parse(this->buffer);
+        std::map<std::string, std::string> headers = this->httpRequestHandler->getHeaders();
+
+        // Validate received request
+        try {
+            this->configHandler->routeValidate(headers["Method"], headers["Path"]);
+        } catch (MethodNotAllowedException& exception) {
+            std::cout << "MethodNotAllowedException" << std::endl;
+
+        } catch (PathNotFoundException& exception) {
+            std::cout << "PathNotFoundException" << std::endl;
+        }
+
+        // Displays the received request
         std::cout << "Received request:\n" << this->buffer << std::endl;
     }
 
     void sendResponse(int clientSocket) {
         // Prepare and send a response to the client
-        const char* response = "HTTP/1.1 200 OK\r\nContent-Length: 14\r\n\r\nHello, World!\n";
-        write(clientSocket, response, std::strlen(response));
+        this->httpResponseHandler->send(
+                200,
+                clientSocket,
+                "Hello world!\n"
+        );
     }
 
     static void signalHandler(int signalNumber) {
@@ -269,10 +295,16 @@ private:
 
 int main() {
     // Dependencies
-    HttpRequestParser parser;
+    ConfigHandler configHandler;
+    HttpRequestHandler httpRequestHandler;
+    HttpResponseHandler httpResponseHandler;
 
     // Create an instance of the Webserver class and start listening
-    Webserver webserver(&parser);
+    Webserver webserver(
+            &configHandler,
+            &httpRequestHandler,
+            &httpResponseHandler
+    );
     webserver.startListening();
     return 0;
 }

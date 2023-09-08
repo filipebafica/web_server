@@ -3,7 +3,7 @@
 #include <string>
 #include <vector>
 #include <string.h>
-#include "../Interfaces/IParser.hpp"
+#include "../Interfaces/IHttpRequestHandler.hpp"
 
 #define SPACE_DELIMITER " "
 #define COLONS_DELIMITER ":"
@@ -11,7 +11,7 @@
 #define REQUEST_HEADER_START_INDEX 1
 #define REQUEST_HEADER_PAIR_SIZE 2
 
-class HttpRequestParser : public IParser {
+class HttpRequestHandler : public IHttpRequestHandler {
 private:
     std::map<std::string, std::string> headers;
     std::string body;
