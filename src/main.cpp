@@ -6,6 +6,7 @@
 #include <csignal>
 #include <sys/poll.h>
 #include <vector>
+#include "./Request/HttpRequestParser.cpp"
 
 class Webserver {
 private:
@@ -14,9 +15,13 @@ private:
     char buffer[1024];
     std::vector<int> clientSockets;
     std::vector<struct pollfd> pollFds; // Stores the file descriptors for polling
+    IParser* parser;
 
 public:
-    Webserver() {
+    Webserver(IParser* parser){
+        // Inject parser
+        this->parser = parser;
+
         // Create the server socket
         this->serverSocket = this->createSocket();
 
@@ -160,6 +165,9 @@ private:
         } else if (bytesRead == 0) {
             std::cerr << "Client disconnected" << std::endl;
         }
+
+        this->parser->parse(this->buffer);
+        std::map<std::string, std::string> headers = this->parser->getHeaders();
     }
 
     void processRequest() {
@@ -260,8 +268,11 @@ private:
 };
 
 int main() {
+    // Dependencies
+    HttpRequestParser parser;
+
     // Create an instance of the Webserver class and start listening
-    Webserver webserver;
+    Webserver webserver(&parser);
     webserver.startListening();
     return 0;
 }
