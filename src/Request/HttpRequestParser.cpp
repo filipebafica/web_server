@@ -3,18 +3,24 @@
 #include <string>
 #include <vector>
 #include <string.h>
-#include "HttpRequestParser.h"
+#include "../Interfaces/IParser.hpp"
 
-class HttpRequestParser {
+#define SPACE_DELIMITER " "
+#define COLONS_DELIMITER ":"
+#define END_OF_LINE_DELIMITER "\r\n"
+#define REQUEST_HEADER_START_INDEX 1
+#define REQUEST_HEADER_PAIR_SIZE 2
+
+class HttpRequestParser : public IParser {
 private:
     std::map<std::string, std::string> headers;
     std::string body;
 
 public:
-    void parse(const std::string& httpRequest) {
+    void parse(char* httpRequest) {
         // Split the request into lines
         std::vector<std::string> lines;
-        lines = this->tokenize((char*)httpRequest.c_str(), END_OF_LINE_DELIMITER);
+        lines = this->tokenize(httpRequest, END_OF_LINE_DELIMITER);
 
         if (lines.empty()) {
             throw std::exception();
@@ -75,30 +81,3 @@ private:
         return tokens;
     }
 };
-
-//int main() {
-//    // Example HTTP request
-//    std::string httpRequest = "GET /path/to/resource HTTP/1.1\r\n"
-//                              "Host: example.com\r\n"
-//                              "User-Agent: Mozilla/5.0\r\n"
-//                              "Accept: text/html\r\n"
-//                              "Content-Length: 12\r\n"
-//                              "\r\n"
-//                              "Hello, World!";
-//
-//    HttpRequestParser parser;
-//    parser.parse(httpRequest);
-//
-//    // Access and print parsed headers
-//    const std::map<std::string, std::string>& headers = parser.getHeaders();
-//    for (const auto& header : headers) {
-//        std::cout << header.first << ": " << header.second << std::endl;
-//    }
-//
-//    // Access and print the request body
-//    const std::string& body = parser.getBody();
-//    std::cout << "Body:\n" << body << std::endl;
-//    std::cout << "------------------" << std::endl;
-//
-//    return 0;
-//}

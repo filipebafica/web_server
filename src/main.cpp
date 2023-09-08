@@ -15,10 +15,13 @@ private:
     char buffer[1024];
     std::vector<int> clientSockets;
     std::vector<struct pollfd> pollFds; // Stores the file descriptors for polling
-    HttpRequestParser parser;
+    IParser* parser;
 
 public:
-    Webserver() {
+    Webserver(IParser* parser){
+        // Inject parser
+        this->parser = parser;
+
         // Create the server socket
         this->serverSocket = this->createSocket();
 
@@ -118,7 +121,7 @@ private:
         */
 
         this->serverAddress.sin_family = AF_INET;
-        this->serverAddress.sin_port = htons(8089);
+        this->serverAddress.sin_port = htons(8088);
         this->serverAddress.sin_addr.s_addr = INADDR_ANY;
     }
 
@@ -163,16 +166,8 @@ private:
             std::cerr << "Client disconnected" << std::endl;
         }
 
-        this->parser.parse(std::string(this->buffer));
-        std::map<std::string, std::string> headers = this->parser.getHeaders();
-
-        std::map<std::string, std::string>::const_iterator it;
-        for (it = headers.begin(); it != headers.end(); ++it) {
-            const std::pair<const std::string, std::string>& header = *it;
-            std::cout << header.first << ": " << header.second << std::endl;
-        }
-
-        std::cout << "----------------------------------------------------" << std::endl;
+        this->parser->parse(this->buffer);
+        std::map<std::string, std::string> headers = this->parser->getHeaders();
     }
 
     void processRequest() {
@@ -262,7 +257,7 @@ private:
 
                 this->readRequest(this->pollFds[i].fd);
                 this->processRequest();
-//                this->sendResponse(this->pollFds[i].fd);
+                this->sendResponse(this->pollFds[i].fd);
                 close(this->pollFds[i].fd);
 
                 // Remove the client socket after handling
@@ -273,8 +268,11 @@ private:
 };
 
 int main() {
+    // Dependencies
+    HttpRequestParser parser;
+
     // Create an instance of the Webserver class and start listening
-    Webserver webserver;
+    Webserver webserver(&parser);
     webserver.startListening();
     return 0;
 }
