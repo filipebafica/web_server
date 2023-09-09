@@ -1,4 +1,4 @@
 class IHttpResponseHandler {
 public:
-    virtual void send(int statusCode, int socket, const char* content) = 0;
+    virtual void responseWriter(int socket, int statusCode, const char* headers, const char* content) = 0;
 };
