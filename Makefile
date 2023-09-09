@@ -1,11 +1,12 @@
 NAME = webserver
 INCLUDES = ./src/Interfaces
-SOURCE = main.cpp InitialConfigHandler.cpp HttpRequestHandler.cpp HttpResponseHandler.cpp
+SOURCE = main.cpp InitialParametersHandler.cpp HttpRequestHandler.cpp \
+		 HttpResponseHandler.cpp ServerSetupHandler.cpp
 OBJECTS_DIR = ./objects/
 OBJECTS = $(SOURCE:%.cpp=$(OBJECTS_DIR)%.o)
 CC = c++
 #FLAGS = -g -Wall -Wextra -Werror -std=c++98
-VPATH = ./src/ ./src/InitialConfig ./src/Request ./src/Response
+VPATH = ./src/ ./src/Setup ./src/Request ./src/Response
 
 
 all: $(NAME)

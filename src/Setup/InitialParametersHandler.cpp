@@ -1,6 +1,6 @@
-#include "../Interfaces/IInitialConfigHandler.hpp"
+#include "../Interfaces/IInitialParametersHandler.hpp"
 
-class InitialConfigHandler : public IInitialConfigHandler {
+class InitialParametersHandler : public IInitialParametersHandler {
 public:
     /*
      * throws PathNotFoundException

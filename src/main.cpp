@@ -1,7 +1,6 @@
 #include <iostream>
 #include <fstream>
 #include <sys/socket.h>
-#include <netinet/in.h>
 #include <cstring>
 #include <unistd.h>
 #include <csignal>
@@ -9,17 +8,17 @@
 #include <stdio.h>
 #include <vector>
 #include <string>
-#include "./InitialConfig/InitialConfigHandler.cpp"
+#include "./Setup/ServerSetupHandler.cpp"
+#include "./Setup/InitialParametersHandler.cpp"
 #include "./Request/HttpRequestHandler.cpp"
 #include "./Response/HttpResponseHandler.cpp"
 
 class Webserver {
 private:
-    IInitialConfigHandler* initialConfigHandler;
+    IServerSetupHandler* serverSetupHandler;
+    IInitialParametersHandler* initialParametersHandler;
     IHttpRequestHandler* httpRequestHandler;
     IHttpResponseHandler* httpResponseHandler;
-    int serverSocket;
-    struct sockaddr_in serverAddress;
     char buffer[1024];
     std::vector<int> clientSockets;
     std::vector<struct pollfd> pollFds; // Stores the file descriptors for polling
@@ -27,32 +26,27 @@ private:
 
 public:
     Webserver(
-            IInitialConfigHandler* initialConfigHandler,
+            IServerSetupHandler* serverSetupHandler,
+            IInitialParametersHandler* initialParametersHandler,
             IHttpRequestHandler* httpRequestHandler,
             IHttpResponseHandler* httpResponseHandler
     ) {
         // Inject dependencies
-        this->initialConfigHandler = initialConfigHandler;
+        this->serverSetupHandler = serverSetupHandler;
+        this->initialParametersHandler = initialParametersHandler;
         this->httpRequestHandler = httpRequestHandler;
         this->httpResponseHandler = httpResponseHandler;
 
-        // Create the server socket
-        this->serverSocket = this->createSocket();
-
-        // Setup server address
-        this->setupServerAddress();
-
-        // Bind server socket to the specified address
-        this->bindServerSocket();
+        // Setups server
+        this->serverSetupHandler->createSocket();
+        this->serverSetupHandler->setupAddress();
+        this->serverSetupHandler->bindServerSocket();
 
         // Set up a signal handler for graceful termination
         std::signal(SIGINT, Webserver::signalHandler);
     }
 
     ~Webserver() {
-        // Close the server socket
-        close(this->serverSocket);
-
         // Close all client sockets
         for (std::vector<int>::iterator it = this->clientSockets.begin(); it != this->clientSockets.end(); ++it) {
             close(*it);
@@ -61,7 +55,7 @@ public:
 
     void startListening() {
         // Prepare server socket to accept calls
-        this->makeServerSocketListen();
+        this->serverSetupHandler->startListening();
 
         while (true) {
             // Update the list of file descriptors to poll
@@ -85,90 +79,6 @@ public:
     }
 
 private:
-    int createSocket() {
-        /*  Creates a socket using the IPv4 address family and TCP socket type.
-            Returns the socket descriptor if the creation is successful.
-            If an error occurs during socket creation, an error message is printed,
-            and the program may exit with a non-zero status.
-
-            - SOCKET:
-              - A socket is a programming interface enabling communication between processes
-              on different devices over networks. It functions as an endpoint for data exchange
-              across networks, whether local or Internet-based
-
-            - AF_INET:
-              - AF stands for Address Family.
-              - AF_INET corresponds to the IPv4 address family.
-
-            - SOCK_STREAM:
-              - SOCK stands for Socket Type.
-              - SOCK_STREAM corresponds to a stream-oriented socket (guarantee the order).
-        */
-
-        int socketDescriptor = socket(AF_INET, SOCK_STREAM, 0);
-        if (socketDescriptor < 0) {
-            std::cerr << "Error creating socket" << std::endl;
-            exit(1);
-        }
-        return socketDescriptor;
-    }
-
-    void setupServerAddress() {
-        /*  Sets up the server address structure.
-            This function configures the server address struct for
-            subsequent binding to the server socket.
-
-            - SIN_FAMILY: Address Family.
-              AF_INET corresponds to the IPv4 address family.
-
-            - SIN_PORT: Port number in network byte order.
-              htons() converts the port to network byte order.
-                - Host Byte Order: This refers to the byte order used by the computer's architecture.
-                For example, on x86-based systems, the host byte order is typically little-endian,
-                meaning the least significant byte comes first.
-
-                - Network Byte Order: This is a standardized byte order used in network communication.
-                It's big-endian, meaning the most significant byte comes first.
-
-            - SIN_ADDR.S_ADDR: IP address of the host.
-              INADDR_ANY allows binding to all available interfaces.
-        */
-
-        this->serverAddress.sin_family = AF_INET;
-        this->serverAddress.sin_port = htons(8088);
-        this->serverAddress.sin_addr.s_addr = INADDR_ANY;
-    }
-
-    void bindServerSocket() {
-        /*  Binds the server socket to a specified address.
-            This function associates the server socket with the preconfigured
-            server address structure for communication.
-
-            If binding fails, an error message is printed, and
-            the program may exit with a non-zero status.
-        */
-
-        int bindToSocket = bind(
-                this->serverSocket,
-                (struct sockaddr*)&this->serverAddress,
-                sizeof(this->serverAddress)
-            );
-
-        if (bindToSocket < 0) {
-            std::cerr << "Error binding socket" << std::endl;
-            exit(1);
-        }
-    }
-
-    void makeServerSocketListen() {
-        /*  Marks the socket referred to by sockfd as a passive socket, that is,
-            as a socket that will be used to accept incoming connection requests using accept.
-        */
-
-        listen(this->serverSocket, 5);
-        std::cout << "Server listening on port 8088" << std::endl;
-    }
-
     void readRequest(int clientSocket) {
         // Clear the buffer and read data from the client socket
         std::memset(this->buffer, 0, sizeof(this->buffer));
@@ -187,7 +97,7 @@ private:
         std::map<std::string, std::string> headers = this->httpRequestHandler->getHeaders();
 
         try {
-            const char* resourcesPath = this->initialConfigHandler->getResourcesPath(
+            const char* resourcesPath = this->initialParametersHandler->getResourcesPath(
                     headers["Method"],
                     headers["Path"]
             );
@@ -212,7 +122,7 @@ private:
                     clientSocket,
                     404,
                     "",
-                    this->getContent(this->initialConfigHandler->getErrorPage()).c_str()
+                    this->getContent(this->initialParametersHandler->getErrorPage()).c_str()
             );
         }
 
@@ -255,11 +165,14 @@ private:
 
         // Add the server socket to the list of file descriptors to poll
         struct pollfd serverPollFd;
-        serverPollFd.fd = this->serverSocket;
+        serverPollFd.fd = this->serverSetupHandler->getServerSocket();
         serverPollFd.events = POLLIN | POLLOUT;
         this->pollFds.push_back(serverPollFd);
 
         // Add each client socket to the list
+        // From the first iteration of the main loop
+        // there will be no client sockets to add to poll
+        // because there is no connection at this point
         for (std::vector<int>::iterator it = this->clientSockets.begin(); it != this->clientSockets.end(); ++it) {
             struct pollfd clientPollFd;
             clientPollFd.fd = *it;
@@ -286,10 +199,10 @@ private:
             and the function returns.
         */
 
-        socklen_t clientAddressSize = sizeof(this->serverAddress);
+        socklen_t clientAddressSize = sizeof(*this->serverSetupHandler->getServerAddress());
         int clientSocket = accept(
-                this->serverSocket,
-                (struct sockaddr*)&this->serverAddress,
+                this->serverSetupHandler->getServerSocket(),
+                (struct sockaddr*)this->serverSetupHandler->getServerAddress(),
                 &clientAddressSize
             );
 
@@ -321,13 +234,15 @@ private:
 
 int main() {
     // Dependencies
-    InitialConfigHandler initialConfigHandler;
+    ServerSetupHandler serverSetupHandler;
+    InitialParametersHandler initialParametersHandler;
     HttpRequestHandler httpRequestHandler;
     HttpResponseHandler httpResponseHandler;
 
     // Create an instance of the Webserver class and start listening
     Webserver webserver(
-            &initialConfigHandler,
+            &serverSetupHandler,
+            &initialParametersHandler,
             &httpRequestHandler,
             &httpResponseHandler
     );
