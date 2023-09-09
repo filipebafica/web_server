@@ -1,19 +1,21 @@
 #include <iostream>
+#include <fstream>
 #include <sys/socket.h>
 #include <netinet/in.h>
 #include <cstring>
 #include <unistd.h>
 #include <csignal>
 #include <sys/poll.h>
+#include <stdio.h>
 #include <vector>
 #include <string>
-#include "./Config/ConfigHandler.cpp"
+#include "./InitialConfig/InitialConfigHandler.cpp"
 #include "./Request/HttpRequestHandler.cpp"
 #include "./Response/HttpResponseHandler.cpp"
 
 class Webserver {
 private:
-    IConfigHandler* configHandler;
+    IInitialConfigHandler* initialConfigHandler;
     IHttpRequestHandler* httpRequestHandler;
     IHttpResponseHandler* httpResponseHandler;
     int serverSocket;
@@ -25,12 +27,12 @@ private:
 
 public:
     Webserver(
-            IConfigHandler* configHandler,
+            IInitialConfigHandler* initialConfigHandler,
             IHttpRequestHandler* httpRequestHandler,
             IHttpResponseHandler* httpResponseHandler
     ) {
         // Inject dependencies
-        this->configHandler = configHandler;
+        this->initialConfigHandler = initialConfigHandler;
         this->httpRequestHandler = httpRequestHandler;
         this->httpResponseHandler = httpResponseHandler;
 
@@ -179,32 +181,57 @@ private:
         }
     }
 
-    void processRequest() {
+    void processRequest(int clientSocket) {
         // Parses received request
         this->httpRequestHandler->parse(this->buffer);
         std::map<std::string, std::string> headers = this->httpRequestHandler->getHeaders();
 
-        // Validate received request
         try {
-            this->configHandler->routeValidate(headers["Method"], headers["Path"]);
+            const char* resourcesPath = this->initialConfigHandler->getResourcesPath(
+                    headers["Method"],
+                    headers["Path"]
+            );
+
+            this->httpResponseHandler->responseWriter(
+                    clientSocket,
+                    200,
+                    "",
+                    this->getContent(resourcesPath).c_str()
+            );
+
         } catch (MethodNotAllowedException& exception) {
-            std::cout << "MethodNotAllowedException" << std::endl;
+            this->httpResponseHandler->responseWriter(
+                    clientSocket,
+                    401,
+                    "",
+                    "Method not allowed\n"
+            );
 
         } catch (PathNotFoundException& exception) {
-            std::cout << "PathNotFoundException" << std::endl;
+            this->httpResponseHandler->responseWriter(
+                    clientSocket,
+                    404,
+                    "",
+                    this->getContent(this->initialConfigHandler->getErrorPage()).c_str()
+            );
         }
 
         // Displays the received request
         std::cout << "Received request:\n" << this->buffer << std::endl;
     }
 
-    void sendResponse(int clientSocket) {
-        // Prepare and send a response to the client
-        this->httpResponseHandler->send(
-                200,
-                clientSocket,
-                "Hello world!\n"
-        );
+    std::string getContent(const char* path) {
+        std::ifstream file;
+        std::string content;
+        std::string line;
+
+        file.open(path, std::ios::binary);
+        while(getline(file, line)) {
+            content += line;
+        }
+        file.close();
+
+        return content;
     }
 
     static void signalHandler(int signalNumber) {
@@ -282,8 +309,7 @@ private:
             if (this->pollFds[i].revents & POLLIN) {
 
                 this->readRequest(this->pollFds[i].fd);
-                this->processRequest();
-                this->sendResponse(this->pollFds[i].fd);
+                this->processRequest(this->pollFds[i].fd);
                 close(this->pollFds[i].fd);
 
                 // Remove the client socket after handling
@@ -295,13 +321,13 @@ private:
 
 int main() {
     // Dependencies
-    ConfigHandler configHandler;
+    InitialConfigHandler initialConfigHandler;
     HttpRequestHandler httpRequestHandler;
     HttpResponseHandler httpResponseHandler;
 
     // Create an instance of the Webserver class and start listening
     Webserver webserver(
-            &configHandler,
+            &initialConfigHandler,
             &httpRequestHandler,
             &httpResponseHandler
     );

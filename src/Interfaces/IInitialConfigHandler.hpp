@@ -4,12 +4,13 @@
 class MethodNotAllowedException: public std::exception {};
 class PathNotFoundException: public std::exception {};
 
-class IConfigHandler {
+class IInitialConfigHandler {
 public:
     /*
      * throws PathNotFoundException
      * throws MethodNotAllowedException
      */
-    virtual void routeValidate(std::string& path, std::string& method) = 0;
-    virtual ~IConfigHandler() {};
+    virtual const char* getResourcesPath(std::string& method, std::string& path) = 0;
+    virtual const char* getErrorPage() const = 0;
+    virtual ~IInitialConfigHandler() {};
 };
