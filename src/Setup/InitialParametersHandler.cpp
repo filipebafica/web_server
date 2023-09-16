@@ -24,4 +24,12 @@ public:
 
         return "./static/404-Page.html";
     }
+
+    const std::vector<int> getListeningPorts() const {
+        std::vector<int> ports;
+        ports.push_back(8080);
+        ports.push_back(8081);
+        ports.push_back(8082);
+        return ports;
+    }
 };
