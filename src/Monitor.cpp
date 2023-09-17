@@ -2,9 +2,10 @@
 #include <sys/poll.h>
 #include <unistd.h>
 #include <cstring>
-#include "./Request/HttpRequestHandler.cpp"
-#include "./Response/HttpResponseHandler.cpp"
+#include <fstream>
 #include "./Webserver.cpp"
+#include "./Interfaces/IHttpRequestHandler.hpp"
+#include "./Interfaces/IHttpResponseHandler.hpp"
 
 class Monitor {
 private:
@@ -13,6 +14,8 @@ private:
     std::vector<Webserver*>* webservers;
     std::vector<int> clientSockets;
     std::vector<struct pollfd> pollFds;
+    std::map<int, Webserver*> fdToWebServerMap;
+    size_t numberOfServerFds;
     char buffer[1024];
 
 public:
@@ -35,9 +38,8 @@ public:
     }
 
     void loop() {
-        this->updatePollFdsWithServerSockets();
-
         while (true) {
+            this->updatePollFdsWithServerSockets();
             this->updatePollFdsWithClientSockets();
 
             if (this->pollEvents() == -1) {
@@ -49,7 +51,7 @@ public:
                 // Check if the server socket has events (new client connection)
                 if (this->serverSocketHasEvents(this->pollFds[i])) {
                     // Accept the new client connection
-                    this->handleNewConnection(this->webservers);
+                    this->handleNewConnection(this->pollFds[i].fd);
                 }
             }
 
@@ -70,6 +72,11 @@ private:
             - POLLOUT: is used to check if you can write data to a file descriptor
             without blocking.
         */
+
+        // Clear all the fds in the pollFds vector
+        this->pollFds.clear();
+
+
         for (size_t i = 0; i < this->webservers->size(); ++i) {
             Webserver* server = (*this->webservers)[i];
             std::vector<int> serverSockets = server->getServerSockets();
@@ -79,6 +86,11 @@ private:
                 serverPollFd.fd = serverSockets[j];
                 serverPollFd.events = POLLIN | POLLOUT;
                 this->pollFds.push_back(serverPollFd);
+
+                this->numberOfServerFds += 1;
+                this->fdToWebServerMap.insert(
+                        std::pair<int, Webserver*>(serverSockets[j], server)
+                );
             }
         }
     }
@@ -102,6 +114,21 @@ private:
         return poll(this->pollFds.data(), this->pollFds.size(), -1);
     }
 
+    void handleRequests() {
+        // Handle requests from existing client sockets
+        for (size_t i = this->numberOfServerFds; i < this->pollFds.size(); ++i) {
+            if (this->pollFds[i].revents & POLLIN) {
+
+                this->readRequest(this->pollFds[i].fd);
+                this->processRequest(this->pollFds[i].fd);
+                close(this->pollFds[i].fd);
+
+                // Remove the client socket after handling
+                this->clientSockets.erase(clientSockets.begin() + i - this->numberOfServerFds);
+            }
+        }
+    }
+
     void readRequest(int clientSocket) {
         // Clear the buffer and read data from the client socket
         std::memset(this->buffer, 0, sizeof(this->buffer));
@@ -120,10 +147,12 @@ private:
         std::map<std::string, std::string> headers = this->httpRequestHandler->getHeaders();
 
         try {
-            const char* resourcesPath = this->initialParametersHandler->getResourcesPath(
-                    headers["Method"],
-                    headers["Path"]
-            );
+            const char* resourcesPath = this->fdToWebServerMap.find(clientSocket)->second
+                    ->getInitialParametersHandler()
+                    ->getResourcesPath(
+                        headers["Method"],
+                        headers["Path"]
+                    );
 
             this->httpResponseHandler->responseWriter(
                     clientSocket,
@@ -145,7 +174,11 @@ private:
                     clientSocket,
                     404,
                     "",
-                    this->getContent(this->initialParametersHandler->getErrorPage()).c_str()
+                    this->getContent(
+                            this->fdToWebServerMap.find(clientSocket)->second
+                            ->getInitialParametersHandler()
+                            ->getErrorPage()
+                    ).c_str()
             );
         }
 
@@ -172,7 +205,7 @@ private:
         return fd.revents & POLLIN;
     }
 
-    void handleNewConnection() {
+    void handleNewConnection(int serverSocket) {
         /*  Handles a new incoming client connection.
             This function accepts a client connection on the server socket.
             It adds the client socket descriptor to the list of client sockets.
@@ -180,10 +213,10 @@ private:
             and the function returns.
         */
 
-        socklen_t clientAddressSize = sizeof(*this->serverSetupHandler->getServerAddress());
+        socklen_t clientAddressSize = sizeof(struct sockaddr*);
         int clientSocket = accept(
-                this->serverSetupHandler->getServerSocket(),
-                (struct sockaddr*)this->serverSetupHandler->getServerAddress(),
+                serverSocket,
+                NULL,
                 &clientAddressSize
         );
 
@@ -194,21 +227,11 @@ private:
 
         // Add the new client socket to the list
         this->clientSockets.push_back(clientSocket);
-    }
-
-    void handleRequests() {
-        // Handle requests from existing client sockets
-        //starts from 1 because the index 0 is reserved for the server
-        for (size_t i = 1; i < this->pollFds.size(); ++i) {
-            if (this->pollFds[i].revents & POLLIN) {
-
-                this->readRequest(this->pollFds[i].fd);
-                this->processRequest(this->pollFds[i].fd);
-                close(this->pollFds[i].fd);
-
-                // Remove the client socket after handling
-                this->clientSockets.erase(clientSockets.begin() + i - 1);
-            }
-        }
+        this->fdToWebServerMap.insert(
+                std::pair<int, Webserver*>(
+                        clientSocket,
+                        this->fdToWebServerMap.find(serverSocket)->second
+                )
+        );
     }
 };

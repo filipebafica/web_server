@@ -2,7 +2,7 @@
 #include <vector>
 #include <netinet/in.h>
 #include <sys/socket.h>
-#include "./Setup/InitialParametersHandler.cpp"
+#include "./Interfaces/IInitialParametersHandler.hpp"
 
 class Webserver {
 private:
@@ -21,6 +21,7 @@ public:
         this->setupAddress();
         this->createSocket();
         this->bindServerSocket();
+        this->startListening();
     }
 
     ~Webserver() {}
