@@ -44,7 +44,6 @@ public:
               - SOCK stands for Socket Type.
               - SOCK_STREAM corresponds to a stream-oriented socket (guarantee the order).
         */
-
         std::vector<int> ports = this->initialParametersHandler->getListeningPorts();
 
         for (size_t i = 0; i < ports.size(); ++i) {
@@ -77,7 +76,6 @@ public:
             - SIN_ADDR.S_ADDR: IP address of the host.
               INADDR_ANY allows binding to all available interfaces.
         */
-
         std::vector<int> ports = this->initialParametersHandler->getListeningPorts();
         for (size_t i = 0; i < ports.size() ; ++i) {
             struct sockaddr_in* address = new struct sockaddr_in;
@@ -98,7 +96,6 @@ public:
             If binding fails, an error message is printed, and
             the program may exit with a non-zero status.
         */
-
         for (size_t i = 0; i < this->serverSockets.size(); ++i) {
             int bindToSocket = bind(
                     this->serverSockets[i],
@@ -117,7 +114,6 @@ public:
         /*  Marks the socket a passive socket, that is,
             as a socket that will be used to accept incoming connection requests using accept.
         */
-
         for (size_t i = 0; i < this->serverSockets.size(); ++i) {
             listen(this->serverSockets[i], 1024);
         }
@@ -127,11 +123,11 @@ public:
         return this->serverSockets;
     }
 
-    std::vector<struct sockaddr_in*> getServerAddresses() const {
-        return this->serverAddresses;
+    const char* getResourcesPath(std::string& method, std::string& path) const {
+        return this->initialParametersHandler->getResourcesPath(method, path);
     }
 
-    const IInitialParametersHandler* getInitialParametersHandler() const {
-        return this->initialParametersHandler;
+    const char* getErrorPage() const {
+        return this->initialParametersHandler->getErrorPage();
     }
 };

@@ -6,8 +6,9 @@
 
 class IHttpRequestHandler {
 public:
-    virtual void parse(char* s) = 0;
-    virtual const std::map<std::string, std::string>& getHeaders() const = 0;
+    virtual void parseRequest() = 0;
+    virtual const std::map<std::string, std::string>& getRequestHeaders() const = 0;
+    virtual void readRequest(int clientSocket) = 0;
     virtual ~IHttpRequestHandler() {};
 };
 
