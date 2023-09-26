@@ -3,7 +3,6 @@
 #include <sstream>
 #include <fstream>
 #include <vector>
-#include "./ServerConfig.cpp"
 
 class FileParser
 {
@@ -21,11 +20,16 @@ public:
         }
     }
 
-    std::vector<ServerConfig> parse()
+    void parse()
     {
         _removeComments();
         // remove white spaces
         // get directives
+    }
+
+    std::string getFileContent() const
+    {
+        return _fileContent;
     }
 
 private:
@@ -88,3 +92,14 @@ private:
     std::string _filePath;
     std::string _fileContent;
 };
+
+int main()
+{
+    std::string filePath("testing.conf");
+
+    FileParser parser(filePath);
+    parser.parse();
+    std::cout << parser.getFileContent() << std::endl;
+
+    return (0);
+}
