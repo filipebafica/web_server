@@ -1,9 +1,8 @@
+#include <iostream>
 #include <map>
 #include <string>
 #include <vector>
-#include <cstring>
-#include <iostream>
-#include <unistd.h>
+#include <string.h>
 #include "../Interfaces/IHttpRequestHandler.hpp"
 
 #define SPACE_DELIMITER " "
@@ -16,16 +15,15 @@ class HttpRequestHandler : public IHttpRequestHandler {
 private:
     std::map<std::string, std::string> headers;
     std::string body;
-    char buffer[1024];
 
 public:
-    void parseRequest() {
+    void parse(char* httpRequest) {
         // Split the request into lines
         std::vector<std::string> lines;
-        lines = this->tokenize(this->buffer, END_OF_LINE_DELIMITER);
+        lines = this->tokenize(httpRequest, END_OF_LINE_DELIMITER);
 
         if (lines.empty()) {
-            return;
+            throw std::exception();
         }
 
         // Parse Request-Line (first line)
@@ -39,39 +37,6 @@ public:
 //            int contentLength = std::stoi(this->headers["Content-Length"]);
 //            this->body = httpRequest.substr(httpRequest.size() - contentLength);
 //        }
-    }
-
-    const std::map<std::string, std::string>& getRequestHeaders() const {
-        return this->headers;
-    }
-
-//    const std::string& getBody() const {
-//        return this->body;
-//    }
-
-    void readRequest(int clientSocket) {
-        // Clear the buffer and read data from the client socket
-        std::memset(this->buffer, 0, sizeof(this->buffer));
-        int bytesRead = read(clientSocket, this->buffer, sizeof(this->buffer));
-
-        if (bytesRead < 0) {
-            std::cerr << "Error reading request" << std::endl;
-        } else if (bytesRead == 0) {
-            std::cerr << "Client disconnected" << std::endl;
-        }
-    }
-
-private:
-    std::vector<std::string> tokenize(char* s, const char* delim) {
-        std::vector<std::string> tokens;
-
-        char *token = strtok(s, delim);
-        while (token != NULL) {
-            tokens.push_back(token);
-            token = strtok(NULL, delim);
-        }
-
-        return tokens;
     }
 
     void parseRequestLine(const std::string& line) {
@@ -93,5 +58,26 @@ private:
                 this->headers[tokens[0]] = tokens[1];
             }
         }
+    }
+
+    const std::map<std::string, std::string>& getHeaders() const {
+        return this->headers;
+    }
+
+//    const std::string& getBody() const {
+//        return this->body;
+//    }
+
+private:
+    std::vector<std::string> tokenize(char* s, const char* delim) {
+        std::vector<std::string> tokens;
+
+        char *token = strtok(s, delim);
+        while (token != NULL) {
+            tokens.push_back(token);
+            token = strtok(NULL, delim);
+        }
+
+        return tokens;
     }
 };

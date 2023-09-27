@@ -1,7 +1,7 @@
 NAME = webserver
 INCLUDES = ./src/Interfaces
-SOURCE = main.cpp Monitor.cpp Webserver.cpp InitialParametersHandler.cpp \
-		 HttpRequestHandler.cpp HttpResponseHandler.cpp
+SOURCE = main.cpp InitialParametersHandler.cpp HttpRequestHandler.cpp \
+		 HttpResponseHandler.cpp ServerSetupHandler.cpp
 OBJECTS_DIR = ./objects/
 OBJECTS = $(SOURCE:%.cpp=$(OBJECTS_DIR)%.o)
 CC = c++

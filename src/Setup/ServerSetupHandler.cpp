@@ -1,30 +1,23 @@
 #include <iostream>
-#include <vector>
 #include <netinet/in.h>
-#include <sys/socket.h>
-#include "./Interfaces/IInitialParametersHandler.hpp"
+#include <unistd.h>
+#include "../Interfaces/IServerSetupHandler.hpp"
 
-class Webserver {
+class ServerSetupHandler : public IServerSetupHandler {
 private:
-    IInitialParametersHandler* initialParametersHandler;
-    std::vector<int> serverSockets;
-    std::vector<struct sockaddr_in*> serverAddresses;
+    int serverSocket;
+    struct sockaddr_in* serverAddress;
 
 public:
-    Webserver(
-            IInitialParametersHandler* initialParametersHandler
-    ) {
-        // Inject dependencies
-        this->initialParametersHandler = initialParametersHandler;
-
-        // Setups server
-        this->setupAddress();
-        this->createSocket();
-        this->bindServerSocket();
-        this->startListening();
+    ServerSetupHandler() {
+        this->serverAddress = new struct sockaddr_in;
     }
 
-    ~Webserver() {}
+    ~ServerSetupHandler() {
+        delete this->serverAddress;
+        close(this->serverSocket);
+    }
+
     void createSocket() {
         /*  Creates a socket using the IPv4 address family and TCP socket type.
             Returns the socket descriptor if the creation is successful.
@@ -44,16 +37,13 @@ public:
               - SOCK stands for Socket Type.
               - SOCK_STREAM corresponds to a stream-oriented socket (guarantee the order).
         */
-        std::vector<int> ports = this->initialParametersHandler->getListeningPorts();
 
-        for (size_t i = 0; i < ports.size(); ++i) {
-            int socketDescriptor = socket(AF_INET, SOCK_STREAM, 0);
-            if (socketDescriptor < 0) {
-                std::cerr << "Error creating socket" << std::endl;
-                exit(1);
-            }
-            this->serverSockets.push_back(socketDescriptor);
+        int socketDescriptor = socket(AF_INET, SOCK_STREAM, 0);
+        if (socketDescriptor < 0) {
+            std::cerr << "Error creating socket" << std::endl;
+            exit(1);
         }
+        this->serverSocket = socketDescriptor;
     }
 
     void setupAddress() {
@@ -76,37 +66,30 @@ public:
             - SIN_ADDR.S_ADDR: IP address of the host.
               INADDR_ANY allows binding to all available interfaces.
         */
-        std::vector<int> ports = this->initialParametersHandler->getListeningPorts();
-        for (size_t i = 0; i < ports.size() ; ++i) {
-            struct sockaddr_in* address = new struct sockaddr_in;
 
-            address->sin_family = AF_INET;
-            address->sin_port = htons(ports[i]);
-            address->sin_addr.s_addr = INADDR_ANY;
-
-            this->serverAddresses.push_back(address);
-        }
+        this->serverAddress->sin_family = AF_INET;
+        this->serverAddress->sin_port = htons(8088);
+        this->serverAddress->sin_addr.s_addr = INADDR_ANY;
     }
 
     void bindServerSocket() {
-        /*  Binds the servers sockets to a specified address.
+        /*  Binds the server socket to a specified address.
             This function associates the server socket with the preconfigured
             server address structure for communication.
 
             If binding fails, an error message is printed, and
             the program may exit with a non-zero status.
         */
-        for (size_t i = 0; i < this->serverSockets.size(); ++i) {
-            int bindToSocket = bind(
-                    this->serverSockets[i],
-                    (struct sockaddr*)this->serverAddresses[i],
-                    sizeof(*this->serverAddresses[i])
-            );
 
-            if (bindToSocket < 0) {
-                std::cerr << "Error binding socket" << std::endl;
-                exit(1);
-            }
+        int bindToSocket = bind(
+                this->serverSocket,
+                (struct sockaddr*)this->serverAddress,
+                sizeof(*this->serverAddress)
+        );
+
+        if (bindToSocket < 0) {
+            std::cerr << "Error binding socket" << std::endl;
+            exit(1);
         }
     }
 
@@ -114,20 +97,16 @@ public:
         /*  Marks the socket a passive socket, that is,
             as a socket that will be used to accept incoming connection requests using accept.
         */
-        for (size_t i = 0; i < this->serverSockets.size(); ++i) {
-            listen(this->serverSockets[i], 1024);
-        }
+
+        listen(this->serverSocket, 5);
+        std::cout << "Server listening on port 8088" << std::endl;
     }
 
-    std::vector<int> getServerSockets() const {
-        return this->serverSockets;
+    int getServerSocket() const {
+        return this->serverSocket;
     }
 
-    const char* getResourcesPath(std::string& method, std::string& path) const {
-        return this->initialParametersHandler->getResourcesPath(method, path);
-    }
-
-    const char* getErrorPage() const {
-        return this->initialParametersHandler->getErrorPage();
+    struct sockaddr_in* getServerAddress() const {
+        return this->serverAddress;
     }
 };
