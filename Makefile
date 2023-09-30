@@ -1,4 +1,4 @@
-NAME = webserver
+NAME = webserv
 INCLUDES = ./src/Interfaces
 SOURCE = main.cpp Monitor.cpp Webserver.cpp InitialParametersHandler.cpp \
 		 HttpRequestHandler.cpp HttpResponseHandler.cpp

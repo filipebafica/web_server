@@ -123,8 +123,8 @@ public:
         return this->serverSockets;
     }
 
-    const char* getResourcesPath(std::string& method, std::string& path) const {
-        return this->initialParametersHandler->getResourcesPath(method, path);
+    const char* getResources(std::string& method, std::string& path) const {
+        return this->initialParametersHandler->getResources(method, path);
     }
 
     const char* getErrorPage() const {

@@ -3,21 +3,31 @@
 class InitialParametersHandler : public IInitialParametersHandler {
 public:
     int i;
+    std::vector<std::string> allowedMethods;
+
     InitialParametersHandler(int i) {
         this->i = i;
+        this->allowedMethods.push_back(std::string("POST"));
+        this->allowedMethods.push_back(std::string("GET"));
+        this->allowedMethods.push_back(std::string("DELETE"));
     };
     /*
      * throws PathNotFoundException
      * throws MethodNotAllowedException
      */
-    const char* getResourcesPath(std::string& method, std::string& path) const {
+    const char* getResources(std::string& method, std::string& path) const {
+        if (! this->validateMethod(method)) {
+            throw MethodNotAllowedException();
+        }
+
         if (path == std::string("/")) {
             return "./static/Hello-World-Page.html";
         }
+
         if (path == std::string("/up-the-irons")) {
             return "./static/Up-The-Irons-Page.html";
         }
-        //        throw MethodNotAllowedException();
+
         throw PathNotFoundException();
     }
 
@@ -35,5 +45,16 @@ public:
         ports.push_back(8081 + this->i);
         ports.push_back(8082 + this->i);
         return ports;
+    }
+
+private:
+    bool validateMethod(std::string& method) const {
+        for (int j = 0; j < this->allowedMethods.size(); j++) {
+            if (this->allowedMethods[j] == method) {
+                return true;
+            }
+        }
+
+        return false;
     }
 };

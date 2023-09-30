@@ -8,8 +8,7 @@ public:
     virtual void send(
             int clientSocket,
             Webserver* webserver,
-            std::map<std::string,
-            std::string> requestHeaders
+            std::map<std::string, std::string> requestHeaders
     ) const = 0;
 };
 
