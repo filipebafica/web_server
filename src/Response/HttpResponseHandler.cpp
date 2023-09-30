@@ -13,17 +13,43 @@ public:
             std::map<std::string, std::string> requestHeaders
         ) const {
         try {
-            const char* resourcesPath = webserver->getResourcesPath(
+            const char* resources = webserver->getResources(
                     requestHeaders["Method"],
                     requestHeaders["Path"]
-                    );
-
-            this->responseWriter(
-                    clientSocket,
-                    200,
-                    "",
-                    this->getContent(resourcesPath).c_str()
             );
+
+           if (std::string("GET") == requestHeaders["Method"]) {
+               this->responseWriter(
+                       clientSocket,
+                       200,
+                       "",
+                       this->getContent(resources).c_str()
+               );
+
+               return;
+           }
+
+           if (std::string("POST") == requestHeaders["Method"]) {
+               this->responseWriter(
+                       clientSocket,
+                       200,
+                       "",
+                       "POST has been made"
+               );
+
+               return;
+           }
+
+           if (std::string("DELETE") == requestHeaders["Method"]) {
+               this->responseWriter(
+                       clientSocket,
+                       200,
+                       "",
+                       "DELETE has been made"
+               );
+
+               return;
+           }
 
         } catch (MethodNotAllowedException& exception) {
             this->responseWriter(
