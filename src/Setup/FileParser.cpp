@@ -10,7 +10,9 @@ class FileParser
 public:
     FileParser(std::string filePath)
     {
-        this->_filePath = filePath;
+        _initSupportedDirectives();
+        _filePath = filePath;
+
         try
         {
             _loadFile();
@@ -24,11 +26,21 @@ public:
     std::vector<ServerConfig> parse()
     {
         _removeComments();
-        // remove white spaces
-        // get directives
+        // _removeWhiteSpaces();
+        _parseDirectives();
     }
 
 private:
+    void _initSupportedDirectives()
+    {
+        _supportedDirectives = {
+            "listen",
+            "server_name",
+            "error_page",
+            "client_max_body_size",
+            "autoindex"};
+    }
+
     void _loadFile()
     {
         std::ifstream configFile;
@@ -81,10 +93,49 @@ private:
         }
     }
 
-    void _removeWhiteSpaces(std::string &fileContent)
+    size_t _findStartServerBlock(size_t serverPos)
     {
+        for (size_t i = serverPos; i < _fileContent.size(); i++)
+        {
+            if (!std::isspace(_fileContent[i]) && _fileContent[i] != '{')
+            {
+                throw std::runtime_error("invalid config file");
+            }
+
+            if (_fileContent[i] == '{')
+            {
+                return i;
+            }
+        }
+        throw std::runtime_error("server block not closed");
+    }
+
+    size_t _findEndServerBlock(size_t start)
+    {
+        for (size_t i = start; i < _fileContent.size(); i++)
+        {
+            
+        }
+    }
+
+    void _parseServerBlock(size_t serverPos)
+    {
+        size_t start = _findStartServerBlock(serverPos);
+        size_t end = _findEndServerBlock(start);
+    }
+
+    void _parseDirectives()
+    {
+        size_t serverPos = 0;
+        size_t offset = 0;
+        while (serverPos = _fileContent.find("server", offset) != std::string::npos)
+        {
+            _parseServerBlock(serverPos);
+            offset += serverPos + 1;
+        }
     }
 
     std::string _filePath;
     std::string _fileContent;
+    std::vector<std::string> _supportedDirectives;
 };

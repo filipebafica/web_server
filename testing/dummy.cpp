@@ -4,8 +4,6 @@
 #include <fstream>
 #include <vector>
 #include <cstring>
-#include <map>
-#include "./ServerConfig.cpp"
 
 class FileParser
 {
@@ -40,15 +38,12 @@ public:
 private:
     void _initSupportedDirectives()
     {
-        _supportedServerDirectives = {
+        _supportedDirectives = {
             "listen",
             "server_name",
             "error_page",
             "client_max_body_size",
-            "autoindex",
-            "location",
-            "default_server",
-        };
+            "autoindex"};
     }
 
     void _loadFile()
@@ -103,23 +98,9 @@ private:
         }
     }
 
-    void _parseDirectives()
-    {
-        std::string directive;
-        for (size_t i = 0; _fileContent[i]; i++)
-        {
-            if (!std::isspace(_fileContent[i]))
-            {
-                directive = _readDirective(&_fileContent[i]);
-                if (!isValidDirective(directive))
-                {
-                    throw std::runtime_error("not a valid root directive");
-                }
-                i = _parseServerBlock(i);
-            }
-        }
-    }
-
+    /**
+     * Transformar esse função em uma função validadora de blocks
+     */
     size_t _findStartServerBlock(size_t serverPos)
     {
         for (size_t i = serverPos; i < _fileContent.size(); i++)
@@ -158,63 +139,26 @@ private:
         throw std::runtime_error("server block not closed");
     }
 
-    ServerConfig makeServerConfig(std::string serverBlock)
-    {
-        ServerConfig serverConfig;
-        std::map<std::string, std::vector<std::string>> data;
-
-        std::istringstream blockStream(serverBlock);
-        std::string currentLine;
-        while (std::getline(blockStream, currentLine))
-        {
-            std::istringstream lineStream(currentLine);
-            std::string key, token;
-
-            /**
-             * Essa função é ótima para pegar diretrizes que tem apenas uma linha
-             * mas não funciona com diretrizes em bloco, então é necessário redefinir
-             * a maneira de acordo com a diretriz em bloco chamada location.
-            */
-            if (lineStream >> key) {
-                while (lineStream >> token) {
-                    data[key].push_back(token);
-                }
-            }
-        }
-
-        return serverConfig;
-    }
-
-    size_t _parseServerBlock(size_t serverPos)
+    std::size_t _parseServerBlock(size_t serverPos)
     {
         size_t start = _findStartServerBlock(serverPos + std::strlen("server"));
         size_t end = _findEndServerBlock(start);
-        std::string serverBlock = _fileContent.substr(start, end + 1 - start);
-        ServerConfig serverConfig = makeServerConfig(serverBlock);
         return (end);
     }
 
-    int isValidDirective(std::string directive)
+    void _parseDirectives()
     {
-        std::string rootDirective("server");
-        return (directive == rootDirective);
-    }
-
-    std::string _readDirective(char *fileContent)
-    {
-        size_t i = 0;
-        std::string directive;
-        while (!std::isspace(fileContent[i]) && fileContent[i] != '\0')
+        size_t serverPos = 0;
+        size_t offset = 0;
+        while ((serverPos = _fileContent.find("server", offset)) != std::string::npos)
         {
-            directive += fileContent[i];
-            i++;
+            offset += _parseServerBlock(serverPos);
         }
-        return (directive);
     }
 
     std::string _filePath;
     std::string _fileContent;
-    std::vector<std::string> _supportedServerDirectives;
+    std::vector<std::string> _supportedDirectives;
 };
 
 int main()
@@ -222,8 +166,8 @@ int main()
     std::string filePath("testing.conf");
 
     FileParser parser(filePath);
-    // std::cout << parser.getFileContent() << std::endl
-    //           << std::endl;
+    std::cout << parser.getFileContent() << std::endl
+              << std::endl;
 
     parser.parse();
 
