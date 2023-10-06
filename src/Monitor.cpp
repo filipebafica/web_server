@@ -56,23 +56,30 @@ public:
 
             // Handles requests from existing clients
             for (int i = this->numberOfServers; i < this->pollFds.size(); ++i) {
+                int fileDescriptor = this->pollFds[i].fd;
+                Webserver* webserver = this->findWebserver(this->pollFds[i].fd);
+
                 if (this->pollFds[i].revents & POLLIN) {
-
                     // Handles request side
-                    this->httpRequestHandler->readRequest(this->pollFds[i].fd);
-                    this->httpRequestHandler->parseRequest();
+                    this->httpRequestHandler->readRequest(
+                            fileDescriptor,
+                            webserver
+                    );
+                    this->httpRequestHandler->parseRequest(webserver);
+                }
 
+                if (this->pollFds[i].revents & POLLOUT) {
                     // Handles response side
                     this->httpResponseHandler->send(
-                            this->pollFds[i].fd,
-                            this->findWebserver(this->pollFds[i].fd),
+                            fileDescriptor,
+                            webserver,
                             this->httpRequestHandler->getRequestHeaders()
                     );
 
                     // Cleaning
-                    close(this->pollFds[i].fd);
+                    close(fileDescriptor);
                     this->clientSockets.erase(this->clientSockets.begin() + (i - this->numberOfServers));
-                    this->fdToWebserverMap.erase(this->pollFds[i].fd);
+                    this->fdToWebserverMap.erase(fileDescriptor);
                 }
             }
         }

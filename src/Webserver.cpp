@@ -1,3 +1,6 @@
+#ifndef WEBSERVER_
+#define WEBSERVER_
+
 #include <iostream>
 #include <vector>
 #include <netinet/in.h>
@@ -9,6 +12,7 @@ private:
     IInitialParametersHandler* initialParametersHandler;
     std::vector<int> serverSockets;
     std::vector<struct sockaddr_in*> serverAddresses;
+    char buffer[1024];
 
 public:
     Webserver(
@@ -123,11 +127,21 @@ public:
         return this->serverSockets;
     }
 
-    const char* getResources(std::string& method, std::string& path) const {
-        return this->initialParametersHandler->getResources(method, path);
+    const char* getResources(std::string& method, std::string& route) const {
+        return this->initialParametersHandler->getResources(method, route);
+    }
+
+    const char* getUploadPath(std::string& route) const {
+        return this->initialParametersHandler->getUploadPath(route);
     }
 
     const char* getErrorPage() const {
         return this->initialParametersHandler->getErrorPage();
     }
+
+    char* getBuffer() {
+        return this->buffer;
+    }
 };
+
+#endif //WEBSERVER_

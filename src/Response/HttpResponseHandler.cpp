@@ -1,6 +1,8 @@
 #include <sstream>
 #include <iostream>
 #include <fstream>
+#include <cstdio>
+#include <cstring>
 #include <map>
 #include <unistd.h>
 #include "../Interfaces/IHttpResponseHandler.hpp"
@@ -15,7 +17,7 @@ public:
         try {
             const char* resources = webserver->getResources(
                     requestHeaders["Method"],
-                    requestHeaders["Path"]
+                    requestHeaders["Route"]
             );
 
            if (std::string("GET") == requestHeaders["Method"]) {
@@ -30,11 +32,16 @@ public:
            }
 
            if (std::string("POST") == requestHeaders["Method"]) {
+               this->uploadFile(
+                       this->getContent(resources).c_str(),
+                       webserver->getUploadPath(requestHeaders["Route"])
+               );
+
                this->responseWriter(
                        clientSocket,
-                       200,
+                       201,
                        "",
-                       "POST has been made"
+                       "file was uploaded successfully"
                );
 
                return;
@@ -59,7 +66,7 @@ public:
                     "Method not allowed\n"
             );
 
-        } catch (PathNotFoundException& exception) {
+        } catch (RouteNotFoundException& exception) {
             this->responseWriter(
                     clientSocket,
                     404,
@@ -82,6 +89,12 @@ private:
         file.close();
 
         return content;
+    }
+
+    void uploadFile(const char* content, const char* fileName) const {
+        FILE* destinationFile = fopen(fileName, "w+");
+        fwrite(content, strlen(content), strlen(content), destinationFile);
+        fclose(destinationFile);
     }
 
     void responseWriter(int socket, int statusCode, const char* headers, const char* content) const {

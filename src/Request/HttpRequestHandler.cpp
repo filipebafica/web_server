@@ -16,13 +16,12 @@ class HttpRequestHandler : public IHttpRequestHandler {
 private:
     std::map<std::string, std::string> headers;
     std::string body;
-    char buffer[1024];
 
 public:
-    void parseRequest() {
+    void parseRequest(Webserver* webserver) {
         // Split the request into lines
         std::vector<std::string> lines;
-        lines = this->tokenize(this->buffer, END_OF_LINE_DELIMITER);
+        lines = this->tokenize(webserver->getBuffer(), END_OF_LINE_DELIMITER);
 
         if (lines.empty()) {
             return;
@@ -49,16 +48,19 @@ public:
 //        return this->body;
 //    }
 
-    void readRequest(int clientSocket) {
+    void readRequest(int clientSocket, Webserver* webserver) {
         // Clear the buffer and read data from the client socket
-        std::memset(this->buffer, 0, sizeof(this->buffer));
-        int bytesRead = read(clientSocket, this->buffer, sizeof(this->buffer));
+        std::memset(webserver->getBuffer(), 0, sizeof(*webserver->getBuffer()));
+        int bytesRead = read(clientSocket, webserver->getBuffer(), sizeof(*webserver->getBuffer()));
 
         if (bytesRead < 0) {
             std::cerr << "Error reading request" << std::endl;
         } else if (bytesRead == 0) {
             std::cerr << "Client disconnected" << std::endl;
         }
+
+        std::cout << "********** REQUEST **********" << std::endl;
+        std::cout << webserver->getBuffer() << std::endl;
     }
 
 private:
@@ -79,7 +81,7 @@ private:
         std::vector<std::string> tokens;
         tokens = this->tokenize((char*)line.c_str(), SPACE_DELIMITER);
         this->headers["Method"] = tokens[0];
-        this->headers["Path"] = tokens[1];
+        this->headers["Route"] = tokens[1];
         this->headers["Version"] = tokens[2];
     }
 
