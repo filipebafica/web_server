@@ -2,6 +2,7 @@
 
 /**
  * @todo It should be implemented tests
+ * @todo Write all functionsd implementation detail
  */
 
 CharacterReader::CharacterReader(const char* filePath) : _position(0) {

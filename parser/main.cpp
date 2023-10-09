@@ -2,7 +2,7 @@
 
 int main() {
     // Create a CharacterReader with the nginx configuration
-    CharacterReader reader("nginx.conf");
+    CharacterReader reader("sample3.conf");
     // Create an NginxLexer with the CharacterReader
     Lexer lexer(reader);
 

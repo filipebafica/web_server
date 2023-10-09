@@ -2,6 +2,7 @@
 
 /**
  * @todo It should be implemented tests
+ * @todo Write all functions implementation detail
  */
 Lexer::Lexer(CharacterReader& characterReader) : reader(characterReader), position(0) {
 
@@ -12,11 +13,13 @@ Lexer::Lexer(CharacterReader& characterReader) : reader(characterReader), positi
         "error_page",
         "client_max_body_size",
         "autoindex",
+        "root",
+        "index",
         "\0",
     };
 
     for (size_t i = 0; allowedKeywords[i] != "\0"; i++) {
-        keywords.push_back(allowedKeywords[i]);
+        keywords.insert(allowedKeywords[i]);
     }
 }
 
@@ -24,7 +27,7 @@ Lexer::Lexer(CharacterReader& characterReader) : reader(characterReader), positi
 void Lexer::skipWhiteSpacesAndComments() {
     char ch = reader.peek();
 
-    while (std::isspace(ch)) {
+    while (ch == ' ' || ch == '\t' || ch == '\n' || ch == '#') {
         if (ch == '#') {
             while (ch != '\n' && ch != EOF) {
                 ch = reader.consume();
@@ -62,22 +65,32 @@ Token Lexer::peek() {
             token.type = RIGHT_BRACE;
             token.value = "}";
             reader.consume();
-        } else if (isalpha(ch)) {
+        } else if (ch == '"') {
             reader.consume();
-            token.type = KEYWORD;
             token.value = "";
 
             while ((ch = reader.consume()) != '"' && ch != EOF) {
                 token.value += ch;
             }
+            
+            if (keywords.find(token.value) == keywords.end()) {
+                token.type = IDENTIFIER;
+            } else {
+                token.type = KEYWORD;
+            }
         } else {
-            token.type = IDENTIFIER;
             token.value = "";
 
             while (!isspace(ch) && ch != ';' && ch != '{' && ch != '}' && ch != '#' && ch != EOF) {
                 token.value += ch;
                 reader.consume();
                 ch = reader.peek();
+            }
+
+            if (keywords.find(token.value) == keywords.end()) {
+                token.type = IDENTIFIER;
+            } else {
+                token.type = KEYWORD;
             }
         }
 
@@ -102,7 +115,7 @@ Token Lexer::consume() {
 }
 
 Token Lexer::consume(int idx) {
-    Token token = peek();
+    Token token = peek(idx);
     position += idx;
     return token;
 }

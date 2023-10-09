@@ -2,14 +2,15 @@
 #define LEXER_HPP_
 
 #include <vector>
+#include <set>
 #include "CharacterReader.hpp"
 
 enum TokenType {
+    KEYWORD,
     IDENTIFIER,
-    SEMICOLON,
     LEFT_BRACE,
     RIGHT_BRACE,
-    KEYWORD,
+    SEMICOLON,
     EOF_TOKEN
 };
 
@@ -20,10 +21,12 @@ struct Token {
 
 class Lexer {
     private:
-        CharacterReader&            reader;
-        std::vector<Token>          tokenBuffer;
-        size_t                      position;
-        std::vector<std::string>    keywords;
+        CharacterReader&        reader;
+        std::vector<Token>      tokenBuffer;
+        size_t                  position;
+
+        //Aqui deveria ser usado unordered_set ao invés de set, mas esta dando erro
+        std::set<std::string>   keywords;
 
         void skipWhiteSpacesAndComments();
 
