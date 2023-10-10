@@ -15,7 +15,7 @@ public:
      * throws RouteNotFoundException
      * throws MethodNotAllowedException
      */
-    const char* getResources(std::string& method, std::string& route) const {
+    const char* getResources(const std::string& method, const std::string& route) const {
         if (! this->validateMethod(method)) {
             throw MethodNotAllowedException();
         }
@@ -31,7 +31,7 @@ public:
         throw RouteNotFoundException();
     }
 
-    const char* getUploadPath(std::string& route) const {
+    const char* getUploadPath(const std::string& route) const {
         return "./testUploadFile.txt";
     }
 
@@ -52,7 +52,7 @@ public:
     }
 
 private:
-    bool validateMethod(std::string& method) const {
+    bool validateMethod(const std::string& method) const {
         for (int j = 0; j < this->allowedMethods.size(); j++) {
             if (this->allowedMethods[j] == method) {
                 return true;

@@ -3,28 +3,23 @@
 #include <unistd.h>
 #include <cstring>
 #include <fstream>
-#include "./Interfaces/IHttpRequestHandler.hpp"
-#include "./Interfaces/IHttpResponseHandler.hpp"
+#include "./Webserver.cpp"
 
 class Monitor {
 private:
-    IHttpRequestHandler* httpRequestHandler;
-    IHttpResponseHandler* httpResponseHandler;
     std::vector<Webserver*>* webservers;
     std::vector<int> clientSockets;
     std::vector<struct pollfd> pollFds;
+    std::vector<int> indexesToClean;
+    std::vector<int> socketsToClean;
     std::map<int, Webserver*> fdToWebserverMap;
     int numberOfServers;
 
 public:
     Monitor(
-            IHttpRequestHandler* httpRequestHandler,
-            IHttpResponseHandler* httpResponseHandler,
             std::vector<Webserver*>* webservers
     ) {
         // Injects dependencies
-        this->httpRequestHandler = httpRequestHandler;
-        this->httpResponseHandler = httpResponseHandler;
         this->webservers = webservers;
     };
     
@@ -36,8 +31,8 @@ public:
     }
 
     void loop() {
+        this->updatePollFdsVectorWithServerSockets();
         while (true) {
-            this->updatePollFdsVectorWithServerSockets();
             this->updatePollFdsVectorWithClientSockets();
 
             if (this->pollEvents() == -1) {
@@ -46,7 +41,7 @@ public:
             }
 
             // Handles new clients connecting
-            for (int i = 0; i < this->pollFds.size(); ++i) {
+            for (int i = 0; i < this->numberOfServers; ++i) {
                 // Check if the server socket has events (new client connection)
                 if (this->serverSocketHasEvents(this->pollFds[i])) {
                     // Accept the new client connection
@@ -56,32 +51,38 @@ public:
 
             // Handles requests from existing clients
             for (int i = this->numberOfServers; i < this->pollFds.size(); ++i) {
-                int fileDescriptor = this->pollFds[i].fd;
-                Webserver* webserver = this->findWebserver(this->pollFds[i].fd);
+                int clientSocket = this->pollFds[i].fd;
+                Webserver* webserver = this->findWebserver(clientSocket);
 
+                // Handles request side
                 if (this->pollFds[i].revents & POLLIN) {
-                    // Handles request side
-                    this->httpRequestHandler->readRequest(
-                            fileDescriptor,
-                            webserver
-                    );
-                    this->httpRequestHandler->parseRequest(webserver);
+                    webserver->readRequest(clientSocket);
+                    webserver->parseRequest();
+                    webserver->setAllowResponse(true);
                 }
 
-                if (this->pollFds[i].revents & POLLOUT) {
-                    // Handles response side
-                    this->httpResponseHandler->send(
-                            fileDescriptor,
-                            webserver,
-                            this->httpRequestHandler->getRequestHeaders()
-                    );
-
-                    // Cleaning
-                    close(fileDescriptor);
-                    this->clientSockets.erase(this->clientSockets.begin() + (i - this->numberOfServers));
-                    this->fdToWebserverMap.erase(fileDescriptor);
+                // Handles response side
+                if ((this->pollFds[i].revents & POLLOUT) && webserver->isResponseAllowed()) {
+                    webserver->send(clientSocket);
+                    webserver->setAllowResponse(false);
+                    this->indexesToClean.push_back(i);
+                    this->socketsToClean.push_back(clientSocket);
                 }
             }
+
+            // Cleaning
+            for (int i = 0; i < this->indexesToClean.size(); ++i) {
+                this->clientSockets.erase(this->clientSockets.begin() + (this->indexesToClean[i] - this->numberOfServers));
+                this->pollFds.erase(this->pollFds.begin() + this->indexesToClean[i]);
+            }
+
+            for (int i = 0; i < this->socketsToClean.size(); ++i) {
+                this->fdToWebserverMap.erase(socketsToClean[i]);
+                close(socketsToClean[i]);
+            }
+
+            this->indexesToClean.clear();
+            this->socketsToClean.clear();
         }
     }
 
@@ -101,7 +102,7 @@ private:
         this->numberOfServers = 0;
 
         // Clear all the fds in the pollFds vector
-        this->pollFds.clear();
+//        this->pollFds.clear();
 
         for (int i = 0; i < this->webservers->size(); ++i) {
             Webserver* server = (*this->webservers)[i];

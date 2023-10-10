@@ -16,12 +16,28 @@ class HttpRequestHandler : public IHttpRequestHandler {
 private:
     std::map<std::string, std::string> headers;
     std::string body;
+    char buffer[1024];
 
 public:
-    void parseRequest(Webserver* webserver) {
+    void readRequest(int clientSocket) {
+        // Clear the buffer and read data from the client socket
+        std::memset(this->buffer, 0, sizeof(this->buffer));
+        int bytesRead = read(clientSocket, this->buffer, sizeof(this->buffer));
+
+        if (bytesRead < 0) {
+            std::cerr << "Error reading request" << std::endl;
+        } else if (bytesRead == 0) {
+            std::cerr << "Client disconnected" << std::endl;
+        }
+
+        std::cout << "********** REQUEST **********" << std::endl;
+        std::cout << this->buffer << std::endl;
+    }
+
+    void parseRequest() {
         // Split the request into lines
         std::vector<std::string> lines;
-        lines = this->tokenize(webserver->getBuffer(), END_OF_LINE_DELIMITER);
+        lines = this->tokenize(this->buffer, END_OF_LINE_DELIMITER);
 
         if (lines.empty()) {
             return;
@@ -40,28 +56,17 @@ public:
 //        }
     }
 
-    const std::map<std::string, std::string>& getRequestHeaders() const {
+    const std::map<std::string, std::string>& getHeaders() const {
         return this->headers;
+    }
+
+    const std::string& getHeader(const std::string& key) const {
+        return this->headers.find(key)->second;
     }
 
 //    const std::string& getBody() const {
 //        return this->body;
 //    }
-
-    void readRequest(int clientSocket, Webserver* webserver) {
-        // Clear the buffer and read data from the client socket
-        std::memset(webserver->getBuffer(), 0, sizeof(*webserver->getBuffer()));
-        int bytesRead = read(clientSocket, webserver->getBuffer(), sizeof(*webserver->getBuffer()));
-
-        if (bytesRead < 0) {
-            std::cerr << "Error reading request" << std::endl;
-        } else if (bytesRead == 0) {
-            std::cerr << "Client disconnected" << std::endl;
-        }
-
-        std::cout << "********** REQUEST **********" << std::endl;
-        std::cout << webserver->getBuffer() << std::endl;
-    }
 
 private:
     std::vector<std::string> tokenize(char* s, const char* delim) {

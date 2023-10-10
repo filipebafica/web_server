@@ -3,13 +3,13 @@
 
 #include <string>
 #include <map>
-#include "../Webserver.cpp"
 
 class IHttpRequestHandler {
 public:
-    virtual void readRequest(int clientSocket, Webserver* webserver) = 0;
-    virtual void parseRequest(Webserver* webserver) = 0;
-    virtual const std::map<std::string, std::string>& getRequestHeaders() const = 0;
+    virtual void readRequest(int clientSocket) = 0;
+    virtual void parseRequest() = 0;
+    virtual const std::map<std::string, std::string>& getHeaders() const = 0;
+    virtual const std::string& getHeader(const std::string& key) const = 0;
     virtual ~IHttpRequestHandler() {};
 };
 

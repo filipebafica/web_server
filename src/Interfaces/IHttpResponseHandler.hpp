@@ -1,14 +1,13 @@
 #ifndef I_HTTP_RESPONSE_HANDLER_
 #define I_HTTP_RESPONSE_HANDLER_
 
-#include "../Webserver.cpp"
-
 class IHttpResponseHandler {
 public:
     virtual void send(
-            int clientSocket,
-            Webserver* webserver,
-            std::map<std::string, std::string> requestHeaders
+            int socket,
+            int statusCode,
+            const char* headers,
+            const char* content
     ) const = 0;
 };
 

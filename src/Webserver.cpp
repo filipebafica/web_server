@@ -3,29 +3,44 @@
 
 #include <iostream>
 #include <vector>
+#include <fstream>
+#include <cstdio>
+#include <cstring>
+#include <map>
 #include <netinet/in.h>
 #include <sys/socket.h>
 #include "./Interfaces/IInitialParametersHandler.hpp"
+#include "./Interfaces/IHttpRequestHandler.hpp"
+#include "./Interfaces/IHttpResponseHandler.hpp"
 
 class Webserver {
 private:
     IInitialParametersHandler* initialParametersHandler;
+    IHttpRequestHandler* httpRequestHandler;
+    IHttpResponseHandler* httpResponseHandler;
     std::vector<int> serverSockets;
     std::vector<struct sockaddr_in*> serverAddresses;
-    char buffer[1024];
+    bool allowResponse;
 
 public:
     Webserver(
-            IInitialParametersHandler* initialParametersHandler
+            IInitialParametersHandler* initialParametersHandler,
+            IHttpRequestHandler* httpRequestHandler,
+            IHttpResponseHandler* httpResponseHandler
     ) {
         // Inject dependencies
         this->initialParametersHandler = initialParametersHandler;
+        this->httpRequestHandler = httpRequestHandler;
+        this->httpResponseHandler = httpResponseHandler;
 
         // Setups server
         this->setupAddress();
         this->createSocket();
         this->bindServerSocket();
         this->startListening();
+
+        // Initialize attributes
+        this->allowResponse = false;
     }
 
     ~Webserver() {}
@@ -139,9 +154,112 @@ public:
         return this->initialParametersHandler->getErrorPage();
     }
 
-    char* getBuffer() {
-        return this->buffer;
+    void readRequest(int clientSocket) {
+        this->httpRequestHandler->readRequest(clientSocket);
     }
+
+    void parseRequest() {
+        this->httpRequestHandler->parseRequest();
+    }
+
+    bool isResponseAllowed() const {
+        return this->allowResponse;
+    }
+
+    void setAllowResponse(bool isResponseAllowed) {
+        this->allowResponse = isResponseAllowed;
+    }
+
+    const std::map<std::string, std::string>& getHeaders() const {
+        return this->httpRequestHandler->getHeaders();
+    }
+
+    void send(int clientSocket) {
+        try {
+            std::string method = this->httpRequestHandler->getHeader("Method");
+            std::string route = this->httpRequestHandler->getHeader("Route");
+            const char* resources = this->initialParametersHandler->getResources(
+                    method,
+                    route
+            );
+
+            if (std::string("GET") == method) {
+                this->httpResponseHandler->send(
+                        clientSocket,
+                        200,
+                        "",
+                        this->getContent(resources).c_str()
+                );
+
+                return;
+            }
+
+            if (std::string("POST") == method) {
+                this->uploadFile(
+                        this->getContent(resources).c_str(),
+                        this->getUploadPath(route)
+                );
+
+                this->httpResponseHandler->send(
+                        clientSocket,
+                        201,
+                        "",
+                        "file was uploaded successfully"
+                );
+
+                return;
+            }
+
+            if (std::string("DELETE") == method) {
+                this->httpResponseHandler->send(
+                        clientSocket,
+                        200,
+                        "",
+                        "DELETE has been made"
+                );
+
+                return;
+            }
+
+        } catch (MethodNotAllowedException& exception) {
+            this->httpResponseHandler->send(
+                    clientSocket,
+                    405,
+                    "",
+                    "Method not allowed\n"
+            );
+
+        } catch (RouteNotFoundException& exception) {
+            this->httpResponseHandler->send(
+                    clientSocket,
+                    404,
+                    "",
+                    this->getContent(this->getErrorPage()).c_str()
+            );
+        }
+    }
+
+private:
+    std::string getContent(const char* path) const {
+        std::ifstream file;
+        std::string content;
+        std::string line;
+
+        file.open(path, std::ios::binary);
+        while(getline(file, line)) {
+            content += line;
+        }
+        file.close();
+
+        return content;
+    }
+
+    void uploadFile(const char* content, const char* fileName) const {
+        FILE* destinationFile = fopen(fileName, "w+");
+        fwrite(content, strlen(content), strlen(content), destinationFile);
+        fclose(destinationFile);
+    }
+
 };
 
 #endif //WEBSERVER_
