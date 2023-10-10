@@ -174,10 +174,30 @@ private:
              * Essa função é ótima para pegar diretrizes que tem apenas uma linha
              * mas não funciona com diretrizes em bloco, então é necessário redefinir
              * a maneira de acordo com a diretriz em bloco chamada location.
-            */
-            if (lineStream >> key) {
-                while (lineStream >> token) {
-                    data[key].push_back(token);
+             * 
+             * Vou precisar usar classes ServerConfig e Location dentro da ServerConfig para conseguir
+             * setar os atributos aqui a partir dos tokens.
+             */
+            if (lineStream >> key)
+            {
+                if (key == std::string("location"))
+                {
+                    int bracketsCount = 0;
+                    while (lineStream >> token)
+                    {
+                        if (token == std::string("{"))
+                        {
+                            
+                        }
+                        data[key].push_back(token);
+                    }
+                }
+                else
+                {
+                    while (lineStream >> token)
+                    {
+                        data[key].push_back(token);
+                    }
                 }
             }
         }

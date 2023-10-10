@@ -5,7 +5,8 @@
 #include <set>
 #include "CharacterReader.hpp"
 
-enum TokenType {
+enum TokenType
+{
     KEYWORD,
     IDENTIFIER,
     LEFT_BRACE,
@@ -14,30 +15,32 @@ enum TokenType {
     EOF_TOKEN
 };
 
-struct Token {
-    TokenType   type;
+struct Token
+{
+    TokenType type;
     std::string value;
 };
 
-class Lexer {
-    private:
-        CharacterReader&        reader;
-        std::vector<Token>      tokenBuffer;
-        size_t                  position;
+class Lexer
+{
+private:
+    CharacterReader &reader;
+    std::vector<Token> tokenBuffer;
+    size_t position;
 
-        //Aqui deveria ser usado unordered_set ao invés de set, mas esta dando erro
-        std::set<std::string>   keywords;
+    // Aqui deveria ser usado unordered_set ao invés de set, mas esta dando erro
+    std::set<std::string> keywords;
 
-        void skipWhiteSpacesAndComments();
+    void skipWhiteSpacesAndComments();
 
-    public:
-        Lexer(CharacterReader& characterReader);
-        
-        Token peek();
-        Token peek(int idx);
+public:
+    Lexer(CharacterReader &characterReader);
 
-        Token consume();
-        Token consume(int idx);
+    Token peek();
+    Token peek(int idx);
+
+    Token consume();
+    Token consume(int idx);
 };
 
 #endif // LEXER_HPP

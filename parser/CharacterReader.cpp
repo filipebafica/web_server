@@ -5,9 +5,11 @@
  * @todo Write all functionsd implementation detail
  */
 
-CharacterReader::CharacterReader(const char* filePath) : _position(0) {
+CharacterReader::CharacterReader(const char *filePath) : _position(0)
+{
     _inputFile.open(filePath);
-    if (!_inputFile.is_open()) {
+    if (!_inputFile.is_open())
+    {
         std::cerr << "Error: Could not open file " << filePath << std::endl;
     }
 
@@ -16,44 +18,63 @@ CharacterReader::CharacterReader(const char* filePath) : _position(0) {
     _buffer = bufferStream.str();
 }
 
-CharacterReader::CharacterReader(const std::string& inputString) : _buffer(inputString), _position(0) {}
+CharacterReader::CharacterReader(const std::string &inputString) : _buffer(inputString), _position(0) {}
 
-char CharacterReader::peek() {
-    if (_position < _buffer.size()) {
+char CharacterReader::peek()
+{
+    if (_position < _buffer.size())
+    {
         return _buffer[_position];
-    } else if (_inputFile.is_open()) {
+    }
+    else if (_inputFile.is_open())
+    {
         return _inputFile.peek();
-    } else {
+    }
+    else
+    {
         return EOF;
     }
 }
 
-char CharacterReader::peek(int idx) {
-    if (_position + idx < _buffer.size()) {
+char CharacterReader::peek(int idx)
+{
+    if (_position + idx < _buffer.size())
+    {
         return _buffer[_position + idx];
-    } else if (_inputFile.is_open()) {
+    }
+    else if (_inputFile.is_open())
+    {
         _inputFile.seekg(_position + idx);
         return _inputFile.peek();
-    } else {
+    }
+    else
+    {
         return EOF;
     }
 }
 
-char CharacterReader::consume() {
+char CharacterReader::consume()
+{
     char currentChar = peek();
-    if (currentChar != EOF) {
+    if (currentChar != EOF)
+    {
         _position++;
-    } else if (_inputFile.is_open() && !_inputFile.eof()) {
+    }
+    else if (_inputFile.is_open() && !_inputFile.eof())
+    {
         _inputFile.get(currentChar);
     }
     return currentChar;
 }
 
-char CharacterReader::consume(int idx) {
+char CharacterReader::consume(int idx)
+{
     char currentChar = EOF;
-    for (int i = 0; i < idx; i++) {
+    for (int i = 0; i < idx; i++)
+    {
         char nextChar = consume();
-        if (nextChar == EOF) {
+        if (nextChar == EOF)
+        {
             break;
         }
         currentChar = nextChar;
@@ -61,13 +82,15 @@ char CharacterReader::consume(int idx) {
     return currentChar;
 }
 
-
-bool CharacterReader::isEOF() {
+bool CharacterReader::isEOF()
+{
     return peek() == EOF;
 }
 
-CharacterReader::~CharacterReader() {
-    if (_inputFile.is_open()) {
+CharacterReader::~CharacterReader()
+{
+    if (_inputFile.is_open())
+    {
         _inputFile.close();
     }
 }
