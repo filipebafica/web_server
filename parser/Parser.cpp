@@ -43,9 +43,8 @@ void Parser::parseToken(std::string keyword)
 void Parser::parseBlockDirective()
 {
     Token token = lexer.consume();
-    while (token.type != EOF_TOKEN)
+    while (token.type != RIGHT_BRACE)
     {
-        std::cout << token.value << std::endl;
         if (token.type == KEYWORD && token.value == std::string("listen"))
         {
             buildListenDirective();
@@ -69,7 +68,7 @@ void Parser::buildListenDirective()
     }
     int port = std::stoi(token.value);
     serverConfigs.at(position).setPort(port);
-    lexer.consume();
+    std::cout << lexer.peek().value << std::endl;
 }
 
 bool Parser::isValidPort(std::string &input)
@@ -88,9 +87,8 @@ bool Parser::isValidPort(std::string &input)
         }
     }
 
-    if (lexer.peek(1).type != SEMICOLON)
+    if (lexer.peek().type != SEMICOLON)
     {
-        std::cout << lexer.peek(1).value << std::endl;
         return false;
     }
 

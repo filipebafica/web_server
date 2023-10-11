@@ -127,22 +127,106 @@ Token Lexer::peek()
     return tokenBuffer[position];
 }
 
+// Token Lexer::peek(int idx)
+// {
+//     while (tokenBuffer.size() <= position + idx)
+//     {
+//         char ch = reader.peek();
+//         Token token;
+
+//         if (ch == EOF)
+//         {
+//             token.type = TokenType::EOF_TOKEN;
+//             token.value = "";
+//             tokenBuffer.push_back(token);
+//             break;
+//         }
+
+//         tokenBuffer.push_back(token);
+//     }
+
+//     return tokenBuffer[position + idx];
+// }
+
 Token Lexer::peek(int idx)
 {
     while (tokenBuffer.size() <= position + idx)
     {
+        skipWhiteSpacesAndComments();
         char ch = reader.peek();
         Token token;
 
         if (ch == EOF)
         {
-            token.type = TokenType::EOF_TOKEN;
+            token.type = EOF_TOKEN;
             token.value = "";
             tokenBuffer.push_back(token);
             break;
         }
 
+        if (ch == ';')
+        {
+            token.type = SEMICOLON;
+            token.value = ";";
+            reader.consume();
+        }
+        else if (ch == '{')
+        {
+            token.type = LEFT_BRACE;
+            token.value = "{";
+            reader.consume();
+        }
+        else if (ch == '}')
+        {
+            token.type = RIGHT_BRACE;
+            token.value = "}";
+            reader.consume();
+        }
+        else if (ch == '"')
+        {
+            reader.consume();
+            token.value = "";
+
+            while ((ch = reader.consume()) != '"' && ch != EOF)
+            {
+                token.value += ch;
+            }
+
+            if (keywords.find(token.value) == keywords.end())
+            {
+                token.type = IDENTIFIER;
+            }
+            else
+            {
+                token.type = KEYWORD;
+            }
+        }
+        else
+        {
+            token.value = "";
+
+            while (!isspace(ch) && ch != ';' && ch != '{' && ch != '}' && ch != '#' && ch != EOF)
+            {
+                token.value += ch;
+                reader.consume();
+                ch = reader.peek();
+            }
+
+            if (keywords.find(token.value) == keywords.end())
+            {
+                token.type = IDENTIFIER;
+            }
+            else
+            {
+                token.type = KEYWORD;
+            }
+        }
+
         tokenBuffer.push_back(token);
+    }
+
+    if (position + idx > tokenBuffer.size()) {
+        throw std::runtime_error("token index is out of bounds");
     }
 
     return tokenBuffer[position + idx];
