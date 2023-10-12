@@ -18,8 +18,10 @@ private:
     void parseBlockDirective();
     void initServerConfig();
 
-    void buildListenDirective();
     bool isValidPort(std::string &port);
+    void buildListenDirective();
+    void buildServerNameDirective();
+    void buildLocationDirection();
 
 public:
     Parser(Lexer &lexer);

@@ -26,29 +26,35 @@ void Parser::parseServerConfig()
     position++;
 }
 
-void Parser::parseToken(std::string keyword)
+void Parser::parseToken(std::string token)
 {
-    Token token = lexer.consume();
-    if (token.value != keyword)
+    Token currToken = lexer.consume();
+    if (currToken.value != token)
     {
-        throw std::runtime_error("invalid keyword token type");
+        throw std::runtime_error("invalid token token type");
     }
 
-    if (token.value == std::string("server"))
+    if (currToken.value == std::string("server"))
     {
         initServerConfig();
     }
 }
 
 void Parser::parseBlockDirective()
-{
+{ 
     Token token = lexer.consume();
     while (token.type != RIGHT_BRACE)
     {
         if (token.type == KEYWORD && token.value == std::string("listen"))
         {
             buildListenDirective();
+        } else if (token.type == KEYWORD && token.value == std::string("server_name")) {
+            std::runtime_error("");
+            buildServerNameDirective();
+        } else if (token.type == KEYWORD && token.value == std::string("location")) {
+            buildLocationDirection();
         }
+        token = lexer.peek();
     }
 }
 
@@ -67,8 +73,20 @@ void Parser::buildListenDirective()
         throw std::runtime_error("invalid port with value x");
     }
     int port = std::stoi(token.value);
-    serverConfigs.at(position).setPort(port);
-    std::cout << lexer.peek().value << std::endl;
+    serverConfigs[position].setPort(port);
+    lexer.consume();
+}
+
+void Parser::buildServerNameDirective()
+{
+    lexer.consume();
+    lexer.consume();
+    lexer.consume();
+}
+
+void Parser::buildLocationDirection()
+{
+    Token token = lexer.consume();
 }
 
 bool Parser::isValidPort(std::string &input)

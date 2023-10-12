@@ -16,6 +16,7 @@ Lexer::Lexer(CharacterReader &characterReader) : reader(characterReader), positi
         "autoindex",
         "root",
         "index",
+        "server_name",
         "\0",
     };
 
@@ -126,27 +127,6 @@ Token Lexer::peek()
 
     return tokenBuffer[position];
 }
-
-// Token Lexer::peek(int idx)
-// {
-//     while (tokenBuffer.size() <= position + idx)
-//     {
-//         char ch = reader.peek();
-//         Token token;
-
-//         if (ch == EOF)
-//         {
-//             token.type = TokenType::EOF_TOKEN;
-//             token.value = "";
-//             tokenBuffer.push_back(token);
-//             break;
-//         }
-
-//         tokenBuffer.push_back(token);
-//     }
-
-//     return tokenBuffer[position + idx];
-// }
 
 Token Lexer::peek(int idx)
 {
