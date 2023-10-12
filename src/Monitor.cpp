@@ -3,41 +3,34 @@
 #include <unistd.h>
 #include <cstring>
 #include <fstream>
-#include "./Interfaces/IHttpRequestHandler.hpp"
-#include "./Interfaces/IHttpResponseHandler.hpp"
+#include <list>
+#include "./Webserver.cpp"
 
 class Monitor {
 private:
-    IHttpRequestHandler* httpRequestHandler;
-    IHttpResponseHandler* httpResponseHandler;
     std::vector<Webserver*>* webservers;
-    std::vector<int> clientSockets;
+    std::list<int> clientSockets;
     std::vector<struct pollfd> pollFds;
     std::map<int, Webserver*> fdToWebserverMap;
     int numberOfServers;
 
 public:
     Monitor(
-            IHttpRequestHandler* httpRequestHandler,
-            IHttpResponseHandler* httpResponseHandler,
             std::vector<Webserver*>* webservers
     ) {
         // Injects dependencies
-        this->httpRequestHandler = httpRequestHandler;
-        this->httpResponseHandler = httpResponseHandler;
         this->webservers = webservers;
+
+        // Initialize attributes
+        this->numberOfServers = 0;
     };
     
     ~Monitor() {
-        // Closes all client sockets
-        for (int i = 0; i < this->clientSockets.size(); ++i) {
-            close(this->clientSockets[i]);
-        }
     }
 
     void loop() {
+        this->updatePollFdsVectorWithServerSockets();
         while (true) {
-            this->updatePollFdsVectorWithServerSockets();
             this->updatePollFdsVectorWithClientSockets();
 
             if (this->pollEvents() == -1) {
@@ -46,7 +39,7 @@ public:
             }
 
             // Handles new clients connecting
-            for (int i = 0; i < this->pollFds.size(); ++i) {
+            for (int i = 0; i < this->numberOfServers; ++i) {
                 // Check if the server socket has events (new client connection)
                 if (this->serverSocketHasEvents(this->pollFds[i])) {
                     // Accept the new client connection
@@ -56,23 +49,23 @@ public:
 
             // Handles requests from existing clients
             for (int i = this->numberOfServers; i < this->pollFds.size(); ++i) {
+                int clientSocket = this->pollFds[i].fd;
+                Webserver* webserver = this->findWebserver(clientSocket);
+
+                // Handles request side
                 if (this->pollFds[i].revents & POLLIN) {
+                    webserver->readRequest(clientSocket);
+                    webserver->parseRequest();
+                    webserver->setAllowResponse(true);
+                }
 
-                    // Handles request side
-                    this->httpRequestHandler->readRequest(this->pollFds[i].fd);
-                    this->httpRequestHandler->parseRequest();
-
-                    // Handles response side
-                    this->httpResponseHandler->send(
-                            this->pollFds[i].fd,
-                            this->findWebserver(this->pollFds[i].fd),
-                            this->httpRequestHandler->getRequestHeaders()
-                    );
-
-                    // Cleaning
-                    close(this->pollFds[i].fd);
-                    this->clientSockets.erase(this->clientSockets.begin() + (i - this->numberOfServers));
-                    this->fdToWebserverMap.erase(this->pollFds[i].fd);
+                // Handles response side
+                if ((this->pollFds[i].revents & POLLOUT) && webserver->isResponseAllowed()) {
+                    webserver->send(clientSocket);
+                    webserver->setAllowResponse(false);
+                    this->clientSockets.remove(clientSocket);
+                    this->fdToWebserverMap.erase(clientSocket);
+                    close(clientSocket);
                 }
             }
         }
@@ -94,7 +87,7 @@ private:
         this->numberOfServers = 0;
 
         // Clear all the fds in the pollFds vector
-        this->pollFds.clear();
+//        this->pollFds.clear();
 
         for (int i = 0; i < this->webservers->size(); ++i) {
             Webserver* server = (*this->webservers)[i];
@@ -120,9 +113,13 @@ private:
             there will be no client sockets to add to poll
             because there is no connection at this point yet
          */
-        for (int i = 0; i < this->clientSockets.size(); ++i) {
+
+        // Remove all the previous client sockets from the pollFds
+        this->pollFds.erase(this->pollFds.begin() + this->numberOfServers, this->pollFds.end());
+
+        for (std::list<int>::iterator it = this->clientSockets.begin(); it != this->clientSockets.end(); ++it) {
             struct pollfd clientPollFd;
-            clientPollFd.fd = this->clientSockets[i];
+            clientPollFd.fd = *it;
             clientPollFd.events = POLLIN | POLLOUT;
             this->pollFds.push_back(clientPollFd);
         }

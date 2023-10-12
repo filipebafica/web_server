@@ -19,6 +19,21 @@ private:
     char buffer[1024];
 
 public:
+    void readRequest(int clientSocket) {
+        // Clear the buffer and read data from the client socket
+        std::memset(this->buffer, 0, sizeof(this->buffer));
+        int bytesRead = read(clientSocket, this->buffer, sizeof(this->buffer));
+
+        if (bytesRead < 0) {
+            std::cerr << "Error reading request" << std::endl;
+        } else if (bytesRead == 0) {
+            std::cerr << "Client disconnected" << std::endl;
+        }
+
+        std::cout << "********** REQUEST **********" << std::endl;
+        std::cout << this->buffer << std::endl;
+    }
+
     void parseRequest() {
         // Split the request into lines
         std::vector<std::string> lines;
@@ -41,25 +56,17 @@ public:
 //        }
     }
 
-    const std::map<std::string, std::string>& getRequestHeaders() const {
+    const std::map<std::string, std::string>& getHeaders() const {
         return this->headers;
+    }
+
+    const std::string& getHeader(const std::string& key) const {
+        return this->headers.find(key)->second;
     }
 
 //    const std::string& getBody() const {
 //        return this->body;
 //    }
-
-    void readRequest(int clientSocket) {
-        // Clear the buffer and read data from the client socket
-        std::memset(this->buffer, 0, sizeof(this->buffer));
-        int bytesRead = read(clientSocket, this->buffer, sizeof(this->buffer));
-
-        if (bytesRead < 0) {
-            std::cerr << "Error reading request" << std::endl;
-        } else if (bytesRead == 0) {
-            std::cerr << "Client disconnected" << std::endl;
-        }
-    }
 
 private:
     std::vector<std::string> tokenize(char* s, const char* delim) {
@@ -79,7 +86,7 @@ private:
         std::vector<std::string> tokens;
         tokens = this->tokenize((char*)line.c_str(), SPACE_DELIMITER);
         this->headers["Method"] = tokens[0];
-        this->headers["Path"] = tokens[1];
+        this->headers["Route"] = tokens[1];
         this->headers["Version"] = tokens[2];
     }
 

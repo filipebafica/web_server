@@ -12,23 +12,27 @@ public:
         this->allowedMethods.push_back(std::string("DELETE"));
     };
     /*
-     * throws PathNotFoundException
+     * throws RouteNotFoundException
      * throws MethodNotAllowedException
      */
-    const char* getResources(std::string& method, std::string& path) const {
+    const char* getResources(const std::string& method, const std::string& route) const {
         if (! this->validateMethod(method)) {
             throw MethodNotAllowedException();
         }
 
-        if (path == std::string("/")) {
+        if (route == std::string("/")) {
             return "./static/Hello-World-Page.html";
         }
 
-        if (path == std::string("/up-the-irons")) {
+        if (route == std::string("/up-the-irons")) {
             return "./static/Up-The-Irons-Page.html";
         }
 
-        throw PathNotFoundException();
+        throw RouteNotFoundException();
+    }
+
+    const char* getUploadPath(const std::string& route) const {
+        return "./testUploadFile.txt";
     }
 
     const char* getErrorPage() const {
@@ -48,7 +52,7 @@ public:
     }
 
 private:
-    bool validateMethod(std::string& method) const {
+    bool validateMethod(const std::string& method) const {
         for (int j = 0; j < this->allowedMethods.size(); j++) {
             if (this->allowedMethods[j] == method) {
                 return true;
