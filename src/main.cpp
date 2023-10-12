@@ -1,4 +1,5 @@
 #include <vector>
+#include <csignal>
 #include "./Setup/InitialParametersHandler.cpp"
 #include "./Request/HttpRequestHandler.cpp"
 #include "./Response/HttpResponseHandler.cpp"

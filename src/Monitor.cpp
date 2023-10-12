@@ -3,15 +3,14 @@
 #include <unistd.h>
 #include <cstring>
 #include <fstream>
+#include <list>
 #include "./Webserver.cpp"
 
 class Monitor {
 private:
     std::vector<Webserver*>* webservers;
-    std::vector<int> clientSockets;
+    std::list<int> clientSockets;
     std::vector<struct pollfd> pollFds;
-    std::vector<int> indexesToClean;
-    std::vector<int> socketsToClean;
     std::map<int, Webserver*> fdToWebserverMap;
     int numberOfServers;
 
@@ -21,13 +20,12 @@ public:
     ) {
         // Injects dependencies
         this->webservers = webservers;
+
+        // Initialize attributes
+        this->numberOfServers = 0;
     };
     
     ~Monitor() {
-        // Closes all client sockets
-        for (int i = 0; i < this->clientSockets.size(); ++i) {
-            close(this->clientSockets[i]);
-        }
     }
 
     void loop() {
@@ -65,24 +63,11 @@ public:
                 if ((this->pollFds[i].revents & POLLOUT) && webserver->isResponseAllowed()) {
                     webserver->send(clientSocket);
                     webserver->setAllowResponse(false);
-                    this->indexesToClean.push_back(i);
-                    this->socketsToClean.push_back(clientSocket);
+                    this->clientSockets.remove(clientSocket);
+                    this->fdToWebserverMap.erase(clientSocket);
+                    close(clientSocket);
                 }
             }
-
-            // Cleaning
-            for (int i = 0; i < this->indexesToClean.size(); ++i) {
-                this->clientSockets.erase(this->clientSockets.begin() + (this->indexesToClean[i] - this->numberOfServers));
-                this->pollFds.erase(this->pollFds.begin() + this->indexesToClean[i]);
-            }
-
-            for (int i = 0; i < this->socketsToClean.size(); ++i) {
-                this->fdToWebserverMap.erase(socketsToClean[i]);
-                close(socketsToClean[i]);
-            }
-
-            this->indexesToClean.clear();
-            this->socketsToClean.clear();
         }
     }
 
@@ -128,9 +113,13 @@ private:
             there will be no client sockets to add to poll
             because there is no connection at this point yet
          */
-        for (int i = 0; i < this->clientSockets.size(); ++i) {
+
+        // Remove all the previous client sockets from the pollFds
+        this->pollFds.erase(this->pollFds.begin() + this->numberOfServers, this->pollFds.end());
+
+        for (std::list<int>::iterator it = this->clientSockets.begin(); it != this->clientSockets.end(); ++it) {
             struct pollfd clientPollFd;
-            clientPollFd.fd = this->clientSockets[i];
+            clientPollFd.fd = *it;
             clientPollFd.events = POLLIN | POLLOUT;
             this->pollFds.push_back(clientPollFd);
         }

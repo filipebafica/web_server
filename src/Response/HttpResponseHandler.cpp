@@ -1,7 +1,6 @@
 #include <sstream>
 #include <iostream>
 #include <unistd.h>
-#include <fcntl.h>
 #include "../Interfaces/IHttpResponseHandler.hpp"
 
 class HttpResponseHandler : public IHttpResponseHandler {
