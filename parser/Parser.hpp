@@ -12,16 +12,23 @@ private:
     std::vector<ServerConfig> serverConfigs;
     size_t position;
 
-    void parseServerConfig();
-    void parseToken(std::string keyword);
     void expectToken(std::string token);
-    void parseBlockDirective();
     void initServerConfig();
 
     bool isValidPort(std::string &port);
-    void buildListenDirective();
-    void buildServerNameDirective();
-    void buildLocationDirection();
+    bool isValidServerName(std::string &serverName);
+    bool isValidRoot(std::string &rootPath);
+
+    void parseServerConfig();
+    void parseServerBlock();
+    void parseListenDirective();
+    void parseToken(std::string keyword);
+    void parseServerNameDirective();
+
+    void parseLocationDirective();
+    void parseLocationBlock();
+    void parseRootDirective();
+    void parseIndexDirective();
 
 public:
     Parser(Lexer &lexer);

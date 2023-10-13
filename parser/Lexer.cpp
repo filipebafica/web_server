@@ -17,6 +17,15 @@ Lexer::Lexer(CharacterReader &characterReader) : reader(characterReader), positi
         "root",
         "index",
         "server_name",
+        "proxy_pass",
+        "alias",
+        "try_files",
+        "rewrite",
+        "return",
+        "expires",
+        "allow",
+        "limit_req",
+        "limit_conn",
         "\0",
     };
 

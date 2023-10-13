@@ -19,8 +19,8 @@ void Parser::parseServerConfig()
     parseToken(std::string("server"));
     std::cout << "parse open bracket" << std::endl;
     parseToken(std::string("{"));
-    std::cout << "parse block directive" << std::endl;
-    parseBlockDirective();
+    std::cout << "parse server block directive" << std::endl;
+    parseServerBlock();
     std::cout << "parse closed bracket" << std::endl;
     parseToken(std::string("}"));
     position++;
@@ -40,19 +40,23 @@ void Parser::parseToken(std::string token)
     }
 }
 
-void Parser::parseBlockDirective()
+void Parser::parseServerBlock()
 { 
     Token token = lexer.consume();
-    while (token.type != RIGHT_BRACE)
+    while (token.type != RIGHT_BRACE && token.type != EOF_TOKEN)
     {
         if (token.type == KEYWORD && token.value == std::string("listen"))
         {
-            buildListenDirective();
-        } else if (token.type == KEYWORD && token.value == std::string("server_name")) {
-            std::runtime_error("");
-            buildServerNameDirective();
-        } else if (token.type == KEYWORD && token.value == std::string("location")) {
-            buildLocationDirection();
+            std::cout << "parse listen directive" << std::endl;
+            parseListenDirective();
+        } else if (token.type == KEYWORD && token.value == std::string("server_name"))
+        {
+            std::cout << "parse server name directive" << std::endl;
+            parseServerNameDirective();
+        } else if (token.type == KEYWORD && token.value == std::string("location"))
+        {
+            std::cout << "parser location directive" << std::endl;
+            parseLocationDirective();
         }
         token = lexer.peek();
     }
@@ -64,12 +68,11 @@ void Parser::initServerConfig()
     serverConfigs.push_back(serverConfig);
 }
 
-void Parser::buildListenDirective()
+void Parser::parseListenDirective()
 {
     Token token = lexer.consume();
     if (token.type != IDENTIFIER || !isValidPort(token.value))
     {
-        // Colocar o valor aqui
         throw std::runtime_error("invalid port with value x");
     }
     int port = std::stoi(token.value);
@@ -77,31 +80,43 @@ void Parser::buildListenDirective()
     lexer.consume();
 }
 
-void Parser::buildServerNameDirective()
+void Parser::parseServerNameDirective()
 {
     lexer.consume();
-    lexer.consume();
-    lexer.consume();
+    Token token = lexer.peek();
+    while (token.type != SEMICOLON && token.type != EOF_TOKEN) {
+        if (!isValidServerName(token.value)) {
+            std::cout << token.value << std::endl;
+            throw std::runtime_error("invalid server name");
+        }
+        serverConfigs[position].setServerName(token.value);
+        token = lexer.consume();
+    }
 }
 
-void Parser::buildLocationDirection()
+void Parser::parseLocationDirective()
 {
-    Token token = lexer.consume();
+    lexer.consume();
+    if (lexer.peek(1).type != LEFT_BRACE && lexer.peek(2).type != LEFT_BRACE) {
+        throw std::runtime_error("invalid directive pattern");
+    }
+    lexer.consume();
+    parseLocationBlock();
+    lexer.consume();
 }
 
 bool Parser::isValidPort(std::string &input)
 {
     if (input.empty())
     {
-        return false; // Empty string is not a valid port
+        return false;
     }
 
-    // Check if all characters in the input string are digits
     for (size_t i = 0; i < input.length(); ++i)
     {
         if (!isdigit(input[i]))
         {
-            return false; // Non-numeric character found
+            return false;
         }
     }
 
@@ -110,7 +125,91 @@ bool Parser::isValidPort(std::string &input)
         return false;
     }
 
-    // Convert the input string to an integer and check the range
     int port = std::stoi(input);
-    return (port >= 1 && port <= 65535);
+    return port >= 1 && port <= 65535;
+}
+
+bool Parser::isValidServerName(std::string& serverName)
+{
+    if (serverName.empty()) {
+        return false;
+    }
+
+    if (serverName.length() > 255) {
+        return false;
+    }
+
+    if (!isalnum(serverName[0]) || !isalnum(serverName[serverName.length() - 1])) {
+        return false;
+    }
+
+    for (size_t i = 0; i < serverName.length(); ++i) {
+        char c = serverName[i];
+        if (!(isalnum(c) || c == '-' || c == '.')) {
+            return false;
+        }
+    }
+
+    return true;
+}
+
+bool Parser::isValidRoot(std::string& rootPath)
+{
+    if (rootPath.empty()) {
+        std::cout << "Error: The root rootPath cannot be empty." << std::endl;
+        return false;
+    }
+
+    // Check for valid rootPath separators (Unix-style '/', not Windows '\')
+    if (rootPath.find('\\') != std::string::npos) {
+        std::cout << "Error: Use Unix-style rootPath separators '/' in the root directive." << std::endl;
+        return false;
+    }
+
+    // Check for absolute rootPath
+    if (rootPath[0] != '/') {
+        std::cout << "Error: The root rootPath must be an absolute rootPath." << std::endl;
+        return false;
+    }
+
+    return true;
+}
+
+void Parser::parseLocationBlock()
+{
+    lexer.consume();
+    Token token = lexer.peek();
+    while (token.type != RIGHT_BRACE && token.type != EOF_TOKEN)
+    {
+        if (token.type == KEYWORD && token.value == std::string("root")) {
+            parseRootDirective();
+        } else if (token.type == KEYWORD && token.value == std::string("index")) {
+            parseIndexDirective();
+        }
+        token = lexer.peek();
+    }
+}
+
+//Talvez seja interessante validar a existência do path
+// Falta setar a diretriz
+void Parser::parseRootDirective()
+{
+    lexer.consume();
+    Token token = lexer.peek();
+    if (token.type != IDENTIFIER || !isValidRoot(token.value)) {
+        throw std::runtime_error("root argument is not a valid identifier");
+    }
+    lexer.consume();
+    token = lexer.peek();
+    if (token.type != SEMICOLON) {
+        throw std::runtime_error("root shouldn't have more than one argument");
+    }
+    lexer.consume();
+}
+
+void Parser::parseIndexDirective()
+{
+    lexer.consume();
+    lexer.consume();
+    lexer.consume();
 }

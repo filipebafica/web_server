@@ -1,5 +1,6 @@
 #include <string>
 #include <vector>
+#include <map>
 
 class ServerConfig
 {
@@ -8,12 +9,12 @@ public:
     {
     }
 
-    const int getPort() const
+    const std::vector<int> getPort() const
     {
         return this->_port;
     }
 
-    const std::string getServerName() const
+    const std::vector<std::string> getServerName() const
     {
         return this->_serverName;
     }
@@ -35,13 +36,13 @@ public:
 
     ServerConfig &setPort(int port)
     {
-        this->_port = port;
+        this->_port.push_back(port);
         return *this;
     }
 
     ServerConfig &setServerName(std::string serverName)
     {
-        this->_serverName = serverName;
+        this->_serverName.push_back(serverName);
         return *this;
     }
 
@@ -68,7 +69,7 @@ public:
     public:
         void setRoot(std::string root)
         {
-            this->_root = root;
+            this->_root.push_back(root);
         }
         void setIndex(std::string index)
         {
@@ -76,7 +77,9 @@ public:
         }
 
     private:
-        std::string _root;
+        std::string _modifier;
+        std::string _pattern;
+        std::vector<std::string> _root;
         std::string _index;
         std::string _allow;
         std::string _deny;
@@ -89,8 +92,8 @@ public:
     };
 
 private:
-    int _port;
-    std::string _serverName;
+    std::vector<int> _port;
+    std::vector<std::string> _serverName;
     std::string _host;
     std::vector<std::string> _errorPages;
     std::string _clientMaxBodySize;
