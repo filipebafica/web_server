@@ -1,3 +1,4 @@
+#include <csignal>
 #include <vector>
 #include <sys/poll.h>
 #include <unistd.h>
@@ -14,6 +15,8 @@ private:
     std::map<int, Webserver*> fdToWebserverMap;
     int numberOfServers;
 
+    static bool monitorRunning;
+
 public:
     Monitor(
             std::vector<Webserver*>* webservers
@@ -23,14 +26,22 @@ public:
 
         // Initialize attributes
         this->numberOfServers = 0;
+        this->monitorRunning = true;
     };
     
     ~Monitor() {
     }
 
+    static void handleSignals(int signal) {
+        Monitor::monitorRunning = false;
+    }
+
     void loop() {
+        signal(SIGINT, Monitor::handleSignals);
+        signal(SIGTERM, Monitor::handleSignals);
+
         this->updatePollFdsVectorWithServerSockets();
-        while (true) {
+        while (this->monitorRunning) {
             this->updatePollFdsVectorWithClientSockets();
 
             if (this->pollEvents() == -1) {
@@ -168,3 +179,5 @@ private:
         return this->fdToWebserverMap.find(fileDescriptor)->second;
     }
 };
+
+bool Monitor::monitorRunning = true;

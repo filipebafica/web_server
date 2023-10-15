@@ -43,7 +43,13 @@ public:
         this->allowResponse = false;
     }
 
-    ~Webserver() {}
+    // ~Webserver() {}
+    ~Webserver() {
+        for (int i = 0; i < this->serverAddresses.size(); i++) {
+            delete this->serverAddresses[i];
+        }
+    }
+
     void createSocket() {
         /*  Creates a socket using the IPv4 address family and TCP socket type.
             Returns the socket descriptor if the creation is successful.
