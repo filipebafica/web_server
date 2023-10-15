@@ -84,3 +84,13 @@ std::string &ServerConfig::Location::getRoot()
 {
     return this->_root;
 }
+
+void ServerConfig::Location::setAutoIndex(std::string autoindex)
+{
+    this->_autoindex = autoindex;
+}
+
+std::string &ServerConfig::Location::getAutoIndex()
+{
+    return this->_autoindex;
+}

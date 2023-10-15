@@ -43,5 +43,8 @@ int main()
 
     std::cout << "MAX_BODY_SIZE: " << serverConfig.back().getClientMaxBodySize() << std::endl;
 
+    std::string autoindex = serverConfig.back().getLocation().back().getAutoIndex();
+    std::cout << "AUTOINDEX: " << autoindex << std::endl;
+
     return 0;
 }

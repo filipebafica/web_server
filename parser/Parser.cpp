@@ -177,13 +177,6 @@ bool Parser::isValidErrorCode(int code)
     return (code >= 100 && code <= 599);
 }
 
-/**
- * @todo: Melhorar esta validação ou limitar argumentos, pois nginx
- * lida com essa diretiva de varias maneiras. Todos os códigos de erro
- * definidos antes do caminho da página são associados aquele path
- * códigos de erro definidos depois utilizam o default, se eu definir
- * um path mais de uma vez ai os códigos de erro usarão o ultimo path.
- */
 bool Parser::isValidErrorPageDirective(Token token)
 {
     int idx = 0;
@@ -229,10 +222,15 @@ void Parser::parseLocationBlock()
     Token token = lexer.peek();
     while (token.type != RIGHT_BRACE && token.type != EOF_TOKEN)
     {
-        if (token.type == KEYWORD && token.value == std::string("root")) {
+        if (token.type == KEYWORD && token.value == std::string("root"))
+        {
             parseRootDirective();
-        } else if (token.type == KEYWORD && token.value == std::string("index")) {
+        } else if (token.type == KEYWORD && token.value == std::string("index"))
+        {
             parseIndexDirective();
+        } else if (token.type == KEYWORD && token.value == std::string("autoindex"))
+        {
+            parseAutoIndexDirective();
         }
         token = lexer.peek();
     }
@@ -326,6 +324,21 @@ void Parser::parseClientMaxBodySizeDirective()
     {
         throw std::runtime_error("client_max_body_size should have only one argument");
     }
+
+    lexer.consume();
+}
+
+void Parser::parseAutoIndexDirective()
+{
+    lexer.consume();
+    Token token = lexer.peek();
+
+    if (token.value != "on" && token.value != "off")
+    {
+        throw std::runtime_error("invalid use of autoindex directive");
+    }
+    serverConfigs.back().getLocation().back().setAutoIndex(token.value);
+    lexer.consume();
 
     lexer.consume();
 }

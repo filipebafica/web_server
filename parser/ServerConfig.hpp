@@ -27,9 +27,11 @@ public:
     public:
         std::vector<std::string> &getIndexes();
         std::string &getRoot();
+        std::string &getAutoIndex();
 
         void setRoot(std::string root);
         void setIndex(std::string index);
+        void setAutoIndex(std::string autoIndex);
     };
 
     const std::vector<int>          &getPort() const;

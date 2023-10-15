@@ -32,6 +32,7 @@ private:
     void parseIndexDirective();
     void parseErrorPageDirective();
     void parseClientMaxBodySizeDirective();
+    void parseAutoIndexDirective();
 
 public:
     Parser(Lexer &lexer);
