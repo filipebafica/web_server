@@ -53,8 +53,10 @@ void Parser::parseServerBlock()
             parseLocationDirective();
         } else if (token.type == KEYWORD && token.value == std::string("error_page"))
         {
-            std::cout << "parse error page directive" << std::endl;
             parseErrorPageDirective();
+        } else if (token.type == KEYWORD && token.value == std::string("client_max_body_size"))
+        {
+            parseClientMaxBodySizeDirective();
         }
         token = lexer.peek();
     }
@@ -298,3 +300,33 @@ void Parser::parseErrorPageDirective()
     }
     lexer.consume();
 }
+
+void Parser::parseClientMaxBodySizeDirective()
+{
+    lexer.consume();
+    Token token = lexer.peek();
+
+    char lastChar = token.value[token.value.size() - 1];
+    if (lastChar != 'M' && lastChar != 'K' && lastChar != 'G')
+    {
+        throw std::runtime_error("client_max_body_size must be in K, M OR G");
+    }
+
+    for (int i = 0; i < token.value.size() - 1; i++)
+    {
+        if (!std::isdigit(token.value[i])) {
+            throw std::runtime_error("client_max_body_size should be digits");
+        }
+    }
+    serverConfigs.back().setClientMaxBodySize(token.value);
+    lexer.consume();
+    
+    token = lexer.peek();
+    if (token.type != SEMICOLON)
+    {
+        throw std::runtime_error("client_max_body_size should have only one argument");
+    }
+
+    lexer.consume();
+}
+

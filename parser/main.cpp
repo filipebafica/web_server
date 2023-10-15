@@ -1,10 +1,12 @@
 #include "Parser.hpp"
 
 void iterateThroughMap(const std::map<int, std::string>& myMap) {
+    std::cout << "ERROR PAGES: " << std::endl;
+
     for (std::map<int, std::string>::const_iterator it = myMap.begin(); it != myMap.end(); ++it) {
         int key = it->first;
         std::string value = it->second;
-        std::cout << "Key: " << key << ", Value: " << value << std::endl;
+        std::cout << "\tKey: " << key << ", Value: " << value << std::endl;
     }
 }
 
@@ -38,6 +40,8 @@ int main()
     std::map<int, std::string> errorPages = serverConfig.back().getErrorPages();
 
     iterateThroughMap(errorPages);
+
+    std::cout << "MAX_BODY_SIZE: " << serverConfig.back().getClientMaxBodySize() << std::endl;
 
     return 0;
 }
