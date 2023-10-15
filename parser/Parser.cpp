@@ -175,8 +175,15 @@ bool Parser::isValidRoot(std::string& rootPath)
     return true;
 }
 
+void Parser::initLocationBlock()
+{
+    ServerConfig::Location location;
+    this->serverConfigs.back().setLocationBlock(location);
+}
+
 void Parser::parseLocationBlock()
 {
+    initLocationBlock();
     lexer.consume();
     Token token = lexer.peek();
     while (token.type != RIGHT_BRACE && token.type != EOF_TOKEN)
@@ -199,6 +206,9 @@ void Parser::parseRootDirective()
     if (token.type != IDENTIFIER || !isValidRoot(token.value)) {
         throw std::runtime_error("root argument is not a valid identifier");
     }
+
+    this->serverConfigs.back().getLocation().back().setRoot(token.value);
+
     lexer.consume();
     token = lexer.peek();
     if (token.type != SEMICOLON) {
@@ -210,6 +220,15 @@ void Parser::parseRootDirective()
 void Parser::parseIndexDirective()
 {
     lexer.consume();
-    lexer.consume();
+    Token token = lexer.peek();
+    while (token.type != SEMICOLON && token.type != EOF_TOKEN)
+    {
+        if (token.type != IDENTIFIER) {
+            throw std::runtime_error("index argument it not valid identifier");
+        }
+        serverConfigs.back().getLocation().back().setIndex(token.value);
+        lexer.consume();
+        token = lexer.peek();
+    }
     lexer.consume();
 }

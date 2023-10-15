@@ -3,7 +3,7 @@
 
 #include <string>
 #include "Lexer.hpp"
-#include "ServerConfig.cpp"
+#include "ServerConfig.hpp"
 
 class Parser
 {
@@ -12,8 +12,8 @@ private:
     std::vector<ServerConfig> serverConfigs;
     size_t position;
 
-    void expectToken(std::string token);
     void initServerConfig();
+    void initLocationBlock();
 
     bool isValidPort(std::string &port);
     bool isValidServerName(std::string &serverName);

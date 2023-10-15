@@ -1,100 +1,86 @@
-#include <string>
-#include <vector>
-#include <map>
+#include "ServerConfig.hpp"
 
-class ServerConfig
+const std::vector<int> &ServerConfig::getPort() const
 {
-public:
-    ServerConfig()
-    {
-    }
+    return this->_port;
+}
 
-    const std::vector<int> getPort() const
-    {
-        return this->_port;
-    }
+const std::vector<std::string> &ServerConfig::getServerName() const
+{
+    return this->_serverName;
+}
 
-    const std::vector<std::string> getServerName() const
-    {
-        return this->_serverName;
-    }
+const std::string &ServerConfig::getHost() const
+{
+    return this->_host;
+}
 
-    const std::string getHost() const
-    {
-        return this->_host;
-    }
+const std::vector<std::string> &ServerConfig::getErrorPages() const
+{
+    return this->_errorPages;
+}
 
-    const std::vector<std::string> getErrorPages() const
-    {
-        return this->_errorPages;
-    }
+const std::string &ServerConfig::getClientMaxBodySize() const
+{
+    return this->_clientMaxBodySize;
+}
 
-    const std::string getClientMaxBodySize() const
-    {
-        return this->_clientMaxBodySize;
-    }
+std::vector<ServerConfig::Location> &ServerConfig::getLocation()
+{
+    return this->_locations;
+} 
 
-    ServerConfig &setPort(int port)
-    {
-        this->_port.push_back(port);
-        return *this;
-    }
+ServerConfig &ServerConfig::setPort(int port)
+{
+    this->_port.push_back(port);
+    return *this;
+}
 
-    ServerConfig &setServerName(std::string serverName)
-    {
-        this->_serverName.push_back(serverName);
-        return *this;
-    }
+ServerConfig &ServerConfig::setServerName(std::string serverName)
+{
+    this->_serverName.push_back(serverName);
+    return *this;
+}
 
-    ServerConfig &setHost(std::string host)
-    {
-        this->_host = host;
-        return *this;
-    }
+ServerConfig &ServerConfig::setHost(std::string host)
+{
+    this->_host = host;
+    return *this;
+}
 
-    ServerConfig &setErrorPages(std::vector<std::string> errorPages)
-    {
-        this->_errorPages = errorPages;
-        return *this;
-    }
+ServerConfig &ServerConfig::setErrorPages(std::vector<std::string> errorPages)
+{
+    this->_errorPages = errorPages;
+    return *this;
+}
 
-    ServerConfig &setClientMaxBodySize(std::string clientMaxBodySize)
-    {
-        this->_clientMaxBodySize = clientMaxBodySize;
-        return *this;
-    }
+ServerConfig &ServerConfig::setClientMaxBodySize(std::string clientMaxBodySize)
+{
+    this->_clientMaxBodySize = clientMaxBodySize;
+    return *this;
+}
 
-    class LocationConfig
-    {
-    public:
-        void setRoot(std::string root)
-        {
-            this->_root.push_back(root);
-        }
-        void setIndex(std::string index)
-        {
-            this->_index = index;
-        }
+void ServerConfig::setLocationBlock(Location location)
+{
+    this->_locations.push_back(location);
+}
 
-    private:
-        std::string _modifier;
-        std::string _pattern;
-        std::vector<std::string> _root;
-        std::string _index;
-        std::string _allow;
-        std::string _deny;
-        std::string _autoindex;
-        std::string _defaultType;
-        std::string _return;
-        std::string _limitExcept;
-        std::string _cgi;
-        std::string _proxyPass;
-    };
+void ServerConfig::Location::setRoot(std::string root)
+{
+    this->_root = root;
+}
 
-private:
-    std::vector<int> _port;
-    std::vector<std::string> _serverName;
-    std::string _host;
-    std::vector<std::string> _errorPages;
-    std::string _clientMaxBodySize;
-};
+void ServerConfig::Location::setIndex(std::string index)
+{
+    this->_index.push_back(index);
+}
+
+std::vector<std::string> &ServerConfig::Location::getIndexes()
+{
+    return this->_index;
+}
+
+std::string &ServerConfig::Location::getRoot()
+{
+    return this->_root;
+}
