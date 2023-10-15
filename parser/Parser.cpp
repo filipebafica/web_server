@@ -340,6 +340,32 @@ void Parser::parseAutoIndexDirective()
     serverConfigs.back().getLocation().back().setAutoIndex(token.value);
     lexer.consume();
 
+    token = lexer.peek();
+    if (token.type != SEMICOLON)
+    {
+        throw std::runtime_error("autoindex should have only one argument");
+    }
+
+    lexer.consume();
+}
+
+void Parser::parseProxyPassDirective()
+{
+    lexer.consume();
+    Token token = lexer.peek();
+
+    if (token.value.find("http://") != 0 && token.value.find("https://") != 0) {
+        throw std::runtime_error("invalid proxy_pass directive");
+    }
+    serverConfigs.back().getLocation().back().setProxyPass(token.value);
+    lexer.consume();
+
+    token = lexer.peek();
+    if (token.type != SEMICOLON)
+    {
+        throw std::runtime_error("proxy_pass should have only one argument");
+    }
+
     lexer.consume();
 }
 

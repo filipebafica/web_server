@@ -28,10 +28,12 @@ public:
         std::vector<std::string> &getIndexes();
         std::string &getRoot();
         std::string &getAutoIndex();
+        std::string &getProxyPass();
 
         void setRoot(std::string root);
         void setIndex(std::string index);
         void setAutoIndex(std::string autoIndex);
+        void setProxyPass(std::string proxyPass);
     };
 
     const std::vector<int>          &getPort() const;
