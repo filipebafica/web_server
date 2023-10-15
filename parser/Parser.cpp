@@ -15,13 +15,10 @@ std::vector<ServerConfig> Parser::parse()
 
 void Parser::parseServerConfig()
 {
-    std::cout << "parse server token" << std::endl;
     parseToken(std::string("server"));
-    std::cout << "parse open bracket" << std::endl;
     parseToken(std::string("{"));
-    std::cout << "parse server block directive" << std::endl;
+    std::cout << "parse server block" << std::endl;
     parseServerBlock();
-    std::cout << "parse closed bracket" << std::endl;
     parseToken(std::string("}"));
     position++;
 }
@@ -47,16 +44,17 @@ void Parser::parseServerBlock()
     {
         if (token.type == KEYWORD && token.value == std::string("listen"))
         {
-            std::cout << "parse listen directive" << std::endl;
             parseListenDirective();
         } else if (token.type == KEYWORD && token.value == std::string("server_name"))
         {
-            std::cout << "parse server name directive" << std::endl;
             parseServerNameDirective();
         } else if (token.type == KEYWORD && token.value == std::string("location"))
         {
-            std::cout << "parser location directive" << std::endl;
             parseLocationDirective();
+        } else if (token.type == KEYWORD && token.value == std::string("error_page"))
+        {
+            std::cout << "parse error page directive" << std::endl;
+            parseErrorPageDirective();
         }
         token = lexer.peek();
     }
@@ -86,7 +84,6 @@ void Parser::parseServerNameDirective()
     Token token = lexer.peek();
     while (token.type != SEMICOLON && token.type != EOF_TOKEN) {
         if (!isValidServerName(token.value)) {
-            std::cout << token.value << std::endl;
             throw std::runtime_error("invalid server name");
         }
         serverConfigs[position].setServerName(token.value);
@@ -160,16 +157,58 @@ bool Parser::isValidRoot(std::string& rootPath)
         return false;
     }
 
-    // Check for valid rootPath separators (Unix-style '/', not Windows '\')
     if (rootPath.find('\\') != std::string::npos) {
         std::cout << "Error: Use Unix-style rootPath separators '/' in the root directive." << std::endl;
         return false;
     }
 
-    // Check for absolute rootPath
     if (rootPath[0] != '/') {
         std::cout << "Error: The root rootPath must be an absolute rootPath." << std::endl;
         return false;
+    }
+
+    return true;
+}
+
+bool Parser::isValidErrorCode(int code)
+{
+    return (code >= 100 && code <= 599);
+}
+
+/**
+ * @todo: Melhorar esta validação ou limitar argumentos, pois nginx
+ * lida com essa diretiva de varias maneiras. Todos os códigos de erro
+ * definidos antes do caminho da página são associados aquele path
+ * códigos de erro definidos depois utilizam o default, se eu definir
+ * um path mais de uma vez ai os códigos de erro usarão o ultimo path.
+ */
+bool Parser::isValidErrorPageDirective(Token token)
+{
+    int idx = 0;
+    std::vector<std::string> errorCodes;
+
+    //valida se error_page tem path
+    while (token.type != SEMICOLON && token.type != EOF_TOKEN)
+    {
+        errorCodes.push_back(token.value);
+        idx++;
+        token = lexer.peek(idx);
+    }
+
+    std::string pagePath = errorCodes.back();
+    if (pagePath[0] != '/') {
+        return false;
+    }
+    errorCodes.pop_back();
+
+    if (!errorCodes.size()) {
+        return false;
+    }
+
+    for (idx = 0; idx < errorCodes.size(); idx++) {
+        if (!isValidErrorCode(std::stoi(errorCodes[idx]))) {
+            return false;
+        }
     }
 
     return true;
@@ -198,7 +237,6 @@ void Parser::parseLocationBlock()
 }
 
 //Talvez seja interessante validar a existência do path
-// Falta setar a diretriz
 void Parser::parseRootDirective()
 {
     lexer.consume();
@@ -229,6 +267,34 @@ void Parser::parseIndexDirective()
         serverConfigs.back().getLocation().back().setIndex(token.value);
         lexer.consume();
         token = lexer.peek();
+    }
+    lexer.consume();
+}
+
+void Parser::parseErrorPageDirective()
+{
+    lexer.consume();
+    Token token  = lexer.peek();
+    if (token.type != IDENTIFIER || !isValidErrorPageDirective(token))
+    {
+        throw std::runtime_error("error_page directive should be: <error_codes1 error_code2 ...> <error_page_path>");
+    }
+
+    std::vector<int> errorCodes;
+    std::string errorPagePath;
+    while (token.type != SEMICOLON && token.type != EOF_TOKEN)
+    {
+        if (token.value[0] == '/') {
+            errorPagePath = token.value;
+            break;
+        }
+        errorCodes.push_back(std::stoi(token.value));
+        token = lexer.consume();
+    }
+
+    for (int idx = 0; idx < errorCodes.size(); idx++)
+    {
+        serverConfigs.back().setErrorPages(errorCodes[idx], errorPagePath);
     }
     lexer.consume();
 }

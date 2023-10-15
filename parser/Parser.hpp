@@ -18,17 +18,19 @@ private:
     bool isValidPort(std::string &port);
     bool isValidServerName(std::string &serverName);
     bool isValidRoot(std::string &rootPath);
+    bool isValidErrorPageDirective(Token token);
+    bool isValidErrorCode(int code);
 
     void parseServerConfig();
     void parseServerBlock();
     void parseListenDirective();
     void parseToken(std::string keyword);
     void parseServerNameDirective();
-
     void parseLocationDirective();
     void parseLocationBlock();
     void parseRootDirective();
     void parseIndexDirective();
+    void parseErrorPageDirective();
 
 public:
     Parser(Lexer &lexer);

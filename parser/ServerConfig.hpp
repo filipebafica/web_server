@@ -35,14 +35,14 @@ public:
     const std::vector<int>          &getPort() const;
     const std::vector<std::string>  &getServerName() const;
     const std::string               &getHost() const;
-    const std::vector<std::string>  &getErrorPages() const;
+    const std::map<int,std::string>  &getErrorPages() const;
     const std::string               &getClientMaxBodySize() const;
     std::vector<ServerConfig::Location> &getLocation();
 
     ServerConfig                    &setPort(int port);
     ServerConfig                    &setServerName(std::string serverName);
     ServerConfig                    &setHost(std::string host);
-    ServerConfig                    &setErrorPages(std::vector<std::string> errorPages);
+    ServerConfig                    &setErrorPages(int code, std::string page);
     ServerConfig                    &setClientMaxBodySize(std::string clientMaxBodySize);
     void                            setLocationBlock(Location location);
 
@@ -51,7 +51,7 @@ private:
     std::vector<int> _port;
     std::vector<std::string> _serverName;
     std::string _host;
-    std::vector<std::string> _errorPages;
+    std::map<int, std::string> _errorPages;
     std::string _clientMaxBodySize;
     std::vector<ServerConfig::Location> _locations;
 };

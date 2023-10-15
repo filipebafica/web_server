@@ -15,7 +15,7 @@ const std::string &ServerConfig::getHost() const
     return this->_host;
 }
 
-const std::vector<std::string> &ServerConfig::getErrorPages() const
+const std::map<int,std::string> &ServerConfig::getErrorPages() const
 {
     return this->_errorPages;
 }
@@ -48,9 +48,9 @@ ServerConfig &ServerConfig::setHost(std::string host)
     return *this;
 }
 
-ServerConfig &ServerConfig::setErrorPages(std::vector<std::string> errorPages)
+ServerConfig &ServerConfig::setErrorPages(int code, std::string page)
 {
-    this->_errorPages = errorPages;
+    this->_errorPages[code] = page;
     return *this;
 }
 
