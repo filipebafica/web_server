@@ -36,6 +36,7 @@ private:
     void parseProxyPassDirective();
     void parseAliasDirective();
     void parseTryFilesDirective();
+    void parseReturnDirective();
 
 public:
     Parser(Lexer &lexer);

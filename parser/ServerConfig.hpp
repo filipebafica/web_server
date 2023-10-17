@@ -19,7 +19,7 @@ public:
         std::string _deny;
         std::string _autoindex;
         std::string _defaultType;
-        std::string _return;
+        std::map<int,std::string> _return;
         std::string _limitExcept;
         std::string _cgi;
         std::string _proxyPass;
@@ -33,6 +33,7 @@ public:
         std::string &getProxyPass();
         std::string &getAlias();
         std::vector<std::string> &getTryFiles();
+        std::map<int,std::string> &getReturn();
 
         void setRoot(std::string root);
         void setIndex(std::string index);
@@ -40,6 +41,7 @@ public:
         void setProxyPass(std::string proxyPass);
         void setAlias(std::string alias);
         void setTryFiles(std::string tryFiles);
+        void setReturn(int code, std::string msg);
     };
 
     const std::vector<int>          &getPort() const;

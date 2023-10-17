@@ -20,7 +20,6 @@ Lexer::Lexer(CharacterReader &characterReader) : reader(characterReader), positi
         "proxy_pass",
         "alias",
         "try_files",
-        "rewrite",
         "return",
         "expires",
         "allow",

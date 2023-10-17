@@ -245,6 +245,9 @@ void Parser::parseLocationBlock()
         } else if (token.type == KEYWORD && token.value == std::string("try_files"))
         {
             parseTryFilesDirective();
+        } else if (token.type == KEYWORD && token.value == std::string("return"))
+        {
+            parseReturnDirective();
         }
         token = lexer.peek();
     }
@@ -427,6 +430,41 @@ void Parser::parseTryFilesDirective()
     if (token.type != SEMICOLON)
     {
         throw std::runtime_error("tryfiles parameter should end with semicolon");
+    }
+
+    lexer.consume();
+}
+
+void Parser::parseReturnDirective()
+{
+    lexer.consume();
+    Token token = lexer.peek();
+
+    if (token.type == SEMICOLON)
+    {
+        throw std::runtime_error("return parameter should not be empty");
+    }
+
+    if (token.type != IDENTIFIER || !isValidErrorCode(std::stoi(token.value)))
+    {
+        throw std::runtime_error("invalid return parameter");
+    }
+    int code = std::stoi(token.value);
+    lexer.consume();
+    token = lexer.peek();
+
+    std::string msg;
+    if (token.type == SEMICOLON) {
+        msg = "";
+    } else {
+        msg = token.value;
+        lexer.consume();
+        token = lexer.peek();
+    }
+    serverConfigs.back().getLocation().back().setReturn(code, msg);
+
+    if (token.type != SEMICOLON) {
+        throw std::runtime_error("return directive should  be <error_code> <optional_msg>");
     }
 
     lexer.consume();

@@ -38,7 +38,6 @@ int main()
     std::cout << "INDEX: " << index.back() << std::endl;
 
     std::map<int, std::string> errorPages = serverConfig.back().getErrorPages();
-
     iterateThroughMap(errorPages);
 
     std::cout << "MAX_BODY_SIZE: " << serverConfig.back().getClientMaxBodySize() << std::endl;
@@ -54,6 +53,9 @@ int main()
 
     std::vector<std::string> tryfiles = serverConfig.back().getLocation().back().getTryFiles();
     std::cout << "TRY FILES: " << tryfiles[0] << std::endl;
+
+    std::map<int, std::string> returnDirective = serverConfig.back().getLocation().back().getReturn();
+    iterateThroughMap(returnDirective);
 
     return 0;
 }

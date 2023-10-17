@@ -124,3 +124,13 @@ void ServerConfig::Location::setTryFiles(std::string tryfile)
 {
     this->_tryFiles.push_back(tryfile);
 }
+
+void ServerConfig::Location::setReturn(int code, std::string msg)
+{
+    this->_return[code] = msg;
+}
+
+std::map<int,std::string> &ServerConfig::Location::getReturn()
+{
+    return this->_return;
+}
