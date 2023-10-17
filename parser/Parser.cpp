@@ -1,5 +1,10 @@
 // Implements the parser recognition
 
+/**
+ * @todo: Será necessário revisar todas as validações criando testes
+ * 
+ */
+
 #include "Parser.hpp"
 
 Parser::Parser(Lexer &lexer) : lexer(lexer), position(0) {}
@@ -152,7 +157,7 @@ bool Parser::isValidServerName(std::string& serverName)
     return true;
 }
 
-bool Parser::isValidRoot(std::string& rootPath)
+bool Parser::isValidPath(std::string& rootPath)
 {
     if (rootPath.empty()) {
         std::cout << "Error: The root rootPath cannot be empty." << std::endl;
@@ -231,6 +236,15 @@ void Parser::parseLocationBlock()
         } else if (token.type == KEYWORD && token.value == std::string("autoindex"))
         {
             parseAutoIndexDirective();
+        } else if (token.type == KEYWORD && token.value == std::string("proxy_pass"))
+        {
+            parseProxyPassDirective();
+        } else if (token.type == KEYWORD && token.value == std::string("alias"))
+        {
+            parseAliasDirective();
+        } else if (token.type == KEYWORD && token.value == std::string("try_files"))
+        {
+            parseTryFilesDirective();
         }
         token = lexer.peek();
     }
@@ -241,7 +255,7 @@ void Parser::parseRootDirective()
 {
     lexer.consume();
     Token token = lexer.peek();
-    if (token.type != IDENTIFIER || !isValidRoot(token.value)) {
+    if (token.type != IDENTIFIER || !isValidPath(token.value)) {
         throw std::runtime_error("root argument is not a valid identifier");
     }
 
@@ -252,6 +266,7 @@ void Parser::parseRootDirective()
     if (token.type != SEMICOLON) {
         throw std::runtime_error("root shouldn't have more than one argument");
     }
+
     lexer.consume();
 }
 
@@ -369,3 +384,50 @@ void Parser::parseProxyPassDirective()
     lexer.consume();
 }
 
+void Parser::parseAliasDirective()
+{
+    lexer.consume();
+    Token token = lexer.peek();
+
+    if (token.type != IDENTIFIER || !isValidPath(token.value)) {
+        throw std::runtime_error("alias argument is not a valid identifier");
+    }
+
+    this->serverConfigs.back().getLocation().back().setAlias(token.value);
+
+    lexer.consume();
+    token = lexer.peek();
+    if (token.type != SEMICOLON) {
+        throw std::runtime_error("alias shouldn't have more than one argument");
+    }
+
+    lexer.consume();
+}
+
+void Parser::parseTryFilesDirective()
+{
+    lexer.consume();
+    Token token = lexer.peek();
+
+    if (token.type == SEMICOLON)
+    {
+        throw std::runtime_error("tryfiles parameter should not be empty");
+    }
+
+    while (token.type != SEMICOLON && token.type != EOF_TOKEN)
+    {
+        if (token.type != IDENTIFIER || (!isValidPath(token.value) && token.value[0] != '$')) {
+            throw std::runtime_error("tryfiles argument is not a valid identifier");
+        }
+        serverConfigs.back().getLocation().back().setTryFiles(token.value);
+        lexer.consume();
+        token = lexer.peek();
+    }
+
+    if (token.type != SEMICOLON)
+    {
+        throw std::runtime_error("tryfiles parameter should end with semicolon");
+    }
+
+    lexer.consume();
+}

@@ -17,7 +17,7 @@ private:
 
     bool isValidPort(std::string &port);
     bool isValidServerName(std::string &serverName);
-    bool isValidRoot(std::string &rootPath);
+    bool isValidPath(std::string &rootPath);
     bool isValidErrorPageDirective(Token token);
     bool isValidErrorCode(int code);
 
@@ -34,6 +34,8 @@ private:
     void parseClientMaxBodySizeDirective();
     void parseAutoIndexDirective();
     void parseProxyPassDirective();
+    void parseAliasDirective();
+    void parseTryFilesDirective();
 
 public:
     Parser(Lexer &lexer);

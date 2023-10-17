@@ -46,5 +46,14 @@ int main()
     std::string autoindex = serverConfig.back().getLocation().back().getAutoIndex();
     std::cout << "AUTOINDEX: " << autoindex << std::endl;
 
+    std::string proxyPass = serverConfig.back().getLocation().back().getProxyPass();
+    std::cout << "PROXY_PASS: " << proxyPass << std::endl;
+
+    std::string alias = serverConfig.back().getLocation().back().getAlias();
+    std::cout << "ALIAS: " << alias << std::endl;
+
+    std::vector<std::string> tryfiles = serverConfig.back().getLocation().back().getTryFiles();
+    std::cout << "TRY FILES: " << tryfiles[0] << std::endl;
+
     return 0;
 }

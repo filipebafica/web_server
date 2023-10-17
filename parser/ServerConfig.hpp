@@ -23,17 +23,23 @@ public:
         std::string _limitExcept;
         std::string _cgi;
         std::string _proxyPass;
+        std::string _alias;
+        std::vector<std::string> _tryFiles;
 
     public:
         std::vector<std::string> &getIndexes();
         std::string &getRoot();
         std::string &getAutoIndex();
         std::string &getProxyPass();
+        std::string &getAlias();
+        std::vector<std::string> &getTryFiles();
 
         void setRoot(std::string root);
         void setIndex(std::string index);
         void setAutoIndex(std::string autoIndex);
         void setProxyPass(std::string proxyPass);
+        void setAlias(std::string alias);
+        void setTryFiles(std::string tryFiles);
     };
 
     const std::vector<int>          &getPort() const;

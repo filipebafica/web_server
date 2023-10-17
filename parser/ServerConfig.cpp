@@ -94,3 +94,33 @@ std::string &ServerConfig::Location::getAutoIndex()
 {
     return this->_autoindex;
 }
+
+void ServerConfig::Location::setProxyPass(std::string proxyPass)
+{
+    this->_proxyPass = proxyPass;
+}
+
+std::string &ServerConfig::Location::getProxyPass()
+{
+    return this->_proxyPass;
+}
+
+void ServerConfig::Location::setAlias(std::string alias)
+{
+    this->_alias = alias;
+}
+
+std::string &ServerConfig::Location::getAlias()
+{
+    return this->_alias;
+}
+
+std::vector<std::string> &ServerConfig::Location::getTryFiles()
+{
+    return this->_tryFiles;
+}
+
+void ServerConfig::Location::setTryFiles(std::string tryfile)
+{
+    this->_tryFiles.push_back(tryfile);
+}
