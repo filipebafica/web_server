@@ -21,10 +21,8 @@ Lexer::Lexer(CharacterReader &characterReader) : reader(characterReader), positi
         "alias",
         "try_files",
         "return",
-        "expires",
         "allow",
-        "limit_req",
-        "limit_conn",
+        "deny",
         "\0",
     };
 

@@ -15,8 +15,8 @@ public:
         std::string _pattern;
         std::string _root;
         std::vector<std::string> _index;
-        std::string _allow;
-        std::string _deny;
+        std::vector<std::string> _allow;
+        std::vector<std::string> _deny;
         std::string _autoindex;
         std::string _defaultType;
         std::map<int,std::string> _return;
@@ -34,6 +34,8 @@ public:
         std::string &getAlias();
         std::vector<std::string> &getTryFiles();
         std::map<int,std::string> &getReturn();
+        std::vector<std::string> &getAllow();
+        std::vector<std::string> &getDeny();
 
         void setRoot(std::string root);
         void setIndex(std::string index);
@@ -42,6 +44,8 @@ public:
         void setAlias(std::string alias);
         void setTryFiles(std::string tryFiles);
         void setReturn(int code, std::string msg);
+        void setAllow(std::string address);
+        void setDeny(std::string address);
     };
 
     const std::vector<int>          &getPort() const;

@@ -157,20 +157,17 @@ bool Parser::isValidServerName(std::string& serverName)
     return true;
 }
 
-bool Parser::isValidPath(std::string& rootPath)
+bool Parser::isValidPath(std::string& path)
 {
-    if (rootPath.empty()) {
-        std::cout << "Error: The root rootPath cannot be empty." << std::endl;
+    if (path.empty()) {
         return false;
     }
 
-    if (rootPath.find('\\') != std::string::npos) {
-        std::cout << "Error: Use Unix-style rootPath separators '/' in the root directive." << std::endl;
+    if (path.find('\\') != std::string::npos) {
         return false;
     }
 
-    if (rootPath[0] != '/') {
-        std::cout << "Error: The root rootPath must be an absolute rootPath." << std::endl;
+    if (path[0] != '/') {
         return false;
     }
 
@@ -214,6 +211,11 @@ bool Parser::isValidErrorPageDirective(Token token)
     return true;
 }
 
+bool Parser::isValidAddress(std::string address)
+{
+    return true;
+}
+
 void Parser::initLocationBlock()
 {
     ServerConfig::Location location;
@@ -244,10 +246,20 @@ void Parser::parseLocationBlock()
             parseAliasDirective();
         } else if (token.type == KEYWORD && token.value == std::string("try_files"))
         {
+            std::cout << "DEBUG1" << std::endl;
             parseTryFilesDirective();
         } else if (token.type == KEYWORD && token.value == std::string("return"))
         {
+            std::cout << "DEBUG2" << std::endl;
             parseReturnDirective();
+        } else if (token.type == KEYWORD && token.value == std::string("allow"))
+        {
+            std::cout << "DEBUG3" << std::endl;
+            parseAllowDirective();
+        } else if (token.type == KEYWORD && token.value == std::string("deny"))
+        {
+            std::cout << "DEBUG4" << std::endl;
+            parseDenyDirective();
         }
         token = lexer.peek();
     }
@@ -468,4 +480,58 @@ void Parser::parseReturnDirective()
     }
 
     lexer.consume();
+}
+
+void Parser::parseAllowDirective()
+{
+    lexer.consume();
+    Token token = lexer.peek();
+
+    if (token.type == SEMICOLON)
+    {
+        throw std::runtime_error("allow parameter should not be empty");
+    }
+
+    if (token.type != IDENTIFIER || !isValidAddress(token.value))
+    {
+        throw std::runtime_error("invalid address parameter");
+    }
+
+    serverConfigs.back().getLocation().back().setAllow(token.value);
+    lexer.consume();
+
+    token = lexer.peek();
+    if (token.type != SEMICOLON)
+    {
+        throw std::runtime_error("allow directive should be <allowed ip address>");
+    }
+
+    lexer.consume();
+}
+
+void Parser::parseDenyDirective()
+{
+    lexer.consume();
+    Token token = lexer.peek();
+
+    if (token.type == SEMICOLON)
+    {
+        throw std::runtime_error("deny parameter should not be empty");
+    }
+
+    if (token.type != IDENTIFIER || !isValidAddress(token.value))
+    {
+        throw std::runtime_error("invalid address parameter");
+    }
+
+    serverConfigs.back().getLocation().back().setDeny(token.value);
+    lexer.consume();
+
+    token = lexer.peek();
+    if (token.type != SEMICOLON)
+    {
+        throw std::runtime_error("deny directive should be <allowed ip address>");
+    }
+
+    lexer.consume();    
 }

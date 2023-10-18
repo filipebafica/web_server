@@ -134,3 +134,23 @@ std::map<int,std::string> &ServerConfig::Location::getReturn()
 {
     return this->_return;
 }
+
+std::vector<std::string> &ServerConfig::Location::getAllow()
+{
+    return this->_allow;
+}
+
+void ServerConfig::Location::setAllow(std::string address)
+{
+    this->_allow.push_back(address);
+}
+
+std::vector<std::string> &ServerConfig::Location::getDeny()
+{
+    return this->_allow;
+}
+
+void ServerConfig::Location::setDeny(std::string address)
+{
+    this->_allow.push_back(address);
+}

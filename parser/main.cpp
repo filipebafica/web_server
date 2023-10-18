@@ -57,5 +57,11 @@ int main()
     std::map<int, std::string> returnDirective = serverConfig.back().getLocation().back().getReturn();
     iterateThroughMap(returnDirective);
 
+    std::vector<std::string> allow = serverConfig.back().getLocation().back().getAllow();
+    std::cout << "ALLOW: " << allow[0] << std::endl;
+
+    std::vector<std::string> deny = serverConfig.back().getLocation().back().getDeny();
+    std::cout << "DENY: " << deny[0] << std::endl;
+
     return 0;
 }

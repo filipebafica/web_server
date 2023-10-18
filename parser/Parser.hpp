@@ -20,6 +20,7 @@ private:
     bool isValidPath(std::string &rootPath);
     bool isValidErrorPageDirective(Token token);
     bool isValidErrorCode(int code);
+    bool isValidAddress(std::string address);
 
     void parseServerConfig();
     void parseServerBlock();
@@ -37,6 +38,8 @@ private:
     void parseAliasDirective();
     void parseTryFilesDirective();
     void parseReturnDirective();
+    void parseAllowDirective();
+    void parseDenyDirective();
 
 public:
     Parser(Lexer &lexer);
