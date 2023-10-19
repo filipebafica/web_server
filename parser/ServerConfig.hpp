@@ -11,7 +11,7 @@ public:
     class Location
     {
     private:
-        std::string _modifier;
+        std::string _route;
         std::string _pattern;
         std::string _root;
         std::vector<std::string> _index;
@@ -36,6 +36,7 @@ public:
         std::map<int,std::string> &getReturn();
         std::vector<std::string> &getAllow();
         std::vector<std::string> &getDeny();
+        std::string &getRoute();
 
         void setRoot(std::string root);
         void setIndex(std::string index);
@@ -46,6 +47,7 @@ public:
         void setReturn(int code, std::string msg);
         void setAllow(std::string address);
         void setDeny(std::string address);
+        void setRoute(std::string route);
     };
 
     const std::vector<int>          &getPort() const;

@@ -13,7 +13,7 @@ void iterateThroughMap(const std::map<int, std::string>& myMap) {
 int main()
 {
     // Create a CharacterReader with the nginx configuration
-    CharacterReader reader("sample5.conf");
+    CharacterReader reader("sample6.conf");
     // Create an NginxLexer with the CharacterReader
     Lexer lexer(reader);
 
@@ -29,39 +29,53 @@ int main()
     //     std::cout << "Token Type: " << token.type << ", Value: " << token.value << std::endl;
     // }
     std::vector<ServerConfig> serverConfig = parser.parse();
-    std::string root = serverConfig.back().getLocation().back().getRoot();
 
-    std::cout << "ROOT: " << root << std::endl;
+    for (int i = 0; i < serverConfig.size(); i++) {
 
-    std::vector<std::string> index = serverConfig.back().getLocation().back().getIndexes();
+        std::cout << "PRINTING SERVER: " << i << std::endl;
 
-    std::cout << "INDEX: " << index.back() << std::endl;
+        std::vector<std::string> serverName = serverConfig[i].getServerName();
+        std::cout << "SERVER NAME: " << serverName[0] << std::endl;
 
-    std::map<int, std::string> errorPages = serverConfig.back().getErrorPages();
-    iterateThroughMap(errorPages);
+        std::string route = serverConfig[i].getLocation().back().getRoute();
+        std::cout << "ROUTE: " << route << std::endl;
 
-    std::cout << "MAX_BODY_SIZE: " << serverConfig.back().getClientMaxBodySize() << std::endl;
+        std::string root = serverConfig[i].getLocation().back().getRoot();
+        std::cout << "ROOT: " << root << std::endl;
 
-    std::string autoindex = serverConfig.back().getLocation().back().getAutoIndex();
-    std::cout << "AUTOINDEX: " << autoindex << std::endl;
+        std::vector<std::string> index = serverConfig[i].getLocation().back().getIndexes();
 
-    std::string proxyPass = serverConfig.back().getLocation().back().getProxyPass();
-    std::cout << "PROXY_PASS: " << proxyPass << std::endl;
+        std::cout << "INDEX: " << index.back() << std::endl;
 
-    std::string alias = serverConfig.back().getLocation().back().getAlias();
-    std::cout << "ALIAS: " << alias << std::endl;
+        std::map<int, std::string> errorPages = serverConfig[i].getErrorPages();
+        iterateThroughMap(errorPages);
 
-    std::vector<std::string> tryfiles = serverConfig.back().getLocation().back().getTryFiles();
-    std::cout << "TRY FILES: " << tryfiles[0] << std::endl;
+        std::cout << "MAX_BODY_SIZE: " << serverConfig[i].getClientMaxBodySize() << std::endl;
 
-    std::map<int, std::string> returnDirective = serverConfig.back().getLocation().back().getReturn();
-    iterateThroughMap(returnDirective);
+        std::string autoindex = serverConfig[i].getLocation().back().getAutoIndex();
+        std::cout << "AUTOINDEX: " << autoindex << std::endl;
 
-    std::vector<std::string> allow = serverConfig.back().getLocation().back().getAllow();
-    std::cout << "ALLOW: " << allow[0] << std::endl;
+        std::string proxyPass = serverConfig[i].getLocation().back().getProxyPass();
+        std::cout << "PROXY_PASS: " << proxyPass << std::endl;
 
-    std::vector<std::string> deny = serverConfig.back().getLocation().back().getDeny();
-    std::cout << "DENY: " << deny[0] << std::endl;
+        std::string alias = serverConfig[i].getLocation().back().getAlias();
+        std::cout << "ALIAS: " << alias << std::endl;
+
+        std::vector<std::string> tryfiles = serverConfig[i].getLocation().back().getTryFiles();
+        std::cout << "TRY FILES: " << tryfiles[0] << std::endl;
+
+        std::map<int, std::string> returnDirective = serverConfig[i].getLocation().back().getReturn();
+        iterateThroughMap(returnDirective);
+
+        std::vector<std::string> allow = serverConfig[i].getLocation().back().getAllow();
+        std::cout << "ALLOW: " << allow[0] << std::endl;
+
+        std::vector<std::string> deny = serverConfig[i].getLocation().back().getDeny();
+        std::cout << "DENY: " << deny[0] << std::endl;
+
+        std::cout << std::endl;
+    }
+
 
     return 0;
 }

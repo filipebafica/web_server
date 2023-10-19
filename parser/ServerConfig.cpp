@@ -154,3 +154,13 @@ void ServerConfig::Location::setDeny(std::string address)
 {
     this->_allow.push_back(address);
 }
+
+std::string &ServerConfig::Location::getRoute()
+{
+    return this->_route;
+}
+
+void ServerConfig::Location::setRoute(std::string route)
+{
+    this->_route = route;
+}

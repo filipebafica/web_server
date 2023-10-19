@@ -22,7 +22,6 @@ void Parser::parseServerConfig()
 {
     parseToken(std::string("server"));
     parseToken(std::string("{"));
-    std::cout << "parse server block" << std::endl;
     parseServerBlock();
     parseToken(std::string("}"));
     position++;
@@ -101,11 +100,29 @@ void Parser::parseServerNameDirective()
 void Parser::parseLocationDirective()
 {
     lexer.consume();
-    if (lexer.peek(1).type != LEFT_BRACE && lexer.peek(2).type != LEFT_BRACE) {
+    Token token = lexer.peek();
+    
+    if (token.type == SEMICOLON)
+    {
+        throw std::runtime_error("location parameter should not be empty");
+    }
+
+    if (token.type != IDENTIFIER || !isValidAddress(token.value))
+    {
+        throw std::runtime_error("invalid route parameter");
+    }
+
+    initLocationBlock();
+    serverConfigs.back().getLocation().back().setRoute(token.value);
+    lexer.consume();
+
+    token = lexer.peek();
+    if (token.type != LEFT_BRACE) {
         throw std::runtime_error("invalid directive pattern");
     }
-    lexer.consume();
+
     parseLocationBlock();
+
     lexer.consume();
 }
 
@@ -224,7 +241,6 @@ void Parser::initLocationBlock()
 
 void Parser::parseLocationBlock()
 {
-    initLocationBlock();
     lexer.consume();
     Token token = lexer.peek();
     while (token.type != RIGHT_BRACE && token.type != EOF_TOKEN)
@@ -246,19 +262,15 @@ void Parser::parseLocationBlock()
             parseAliasDirective();
         } else if (token.type == KEYWORD && token.value == std::string("try_files"))
         {
-            std::cout << "DEBUG1" << std::endl;
             parseTryFilesDirective();
         } else if (token.type == KEYWORD && token.value == std::string("return"))
         {
-            std::cout << "DEBUG2" << std::endl;
             parseReturnDirective();
         } else if (token.type == KEYWORD && token.value == std::string("allow"))
         {
-            std::cout << "DEBUG3" << std::endl;
             parseAllowDirective();
         } else if (token.type == KEYWORD && token.value == std::string("deny"))
         {
-            std::cout << "DEBUG4" << std::endl;
             parseDenyDirective();
         }
         token = lexer.peek();
@@ -496,7 +508,6 @@ void Parser::parseAllowDirective()
     {
         throw std::runtime_error("invalid address parameter");
     }
-
     serverConfigs.back().getLocation().back().setAllow(token.value);
     lexer.consume();
 
@@ -523,7 +534,6 @@ void Parser::parseDenyDirective()
     {
         throw std::runtime_error("invalid address parameter");
     }
-
     serverConfigs.back().getLocation().back().setDeny(token.value);
     lexer.consume();
 
