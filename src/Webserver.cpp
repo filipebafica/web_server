@@ -170,8 +170,8 @@ public:
         this->allowResponse = isResponseAllowed;
     }
 
-    const std::map<std::string, std::string>& getHeaders() const {
-        return this->httpRequestHandler->getHeaders();
+    const std::map<std::string, std::string>& getRequest() const {
+        return this->httpRequestHandler->getRequest();
     }
 
     void send(int clientSocket) {
