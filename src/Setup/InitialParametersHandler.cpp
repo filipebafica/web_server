@@ -1,6 +1,7 @@
 #include "../Interfaces/IInitialParametersHandler.hpp"
 
-class InitialParametersHandler : public IInitialParametersHandler {
+class InitialParametersHandler : public IInitialParametersHandler
+{
 public:
     int i;
     std::vector<std::string> allowedMethods;
@@ -35,10 +36,11 @@ public:
         return "./testUploadFile.txt";
     }
 
-    const char* getErrorPage() const {
-//        if (this->errorPage != NULL) {
-//            return "path/to/user/error/page";
-//        }
+    const char *getErrorPage() const
+    {
+        //        if (this->errorPage != NULL) {
+        //            return "path/to/user/error/page";
+        //        }
 
         return "./static/404-Page.html";
     }
