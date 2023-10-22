@@ -5,7 +5,7 @@
 
 class HttpResponseHandler : public IHttpResponseHandler {
 public:
-    void responseWriter(int socket, int statusCode, const char* headers, const char* content) {
+    void send(int socket, int statusCode, const char* headers, const char* content) const {
         std::stringstream response;
 
         response << "HTTP/1.1"
