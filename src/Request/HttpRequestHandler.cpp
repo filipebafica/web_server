@@ -4,6 +4,7 @@
 #include <cstring>
 #include <iostream>
 #include <unistd.h>
+#include <cstdlib>
 #include "../Interfaces/IHttpRequestHandler.hpp"
 
 #define SPACE_DELIMITER " "
@@ -145,7 +146,7 @@ private:
 
             // Extract the chunk size // 16 is used to define the base of the chunk length
             std::string chunkSizeStr = chunkedBody.substr(pos, crlfPos - pos);
-            int chunkSize = std::stoi(chunkSizeStr, nullptr, 16);
+            long chunkSize = strtol(chunkSizeStr.c_str(), NULL, 16);
 
             if (chunkSize == 0) {
                 // End of chunked data

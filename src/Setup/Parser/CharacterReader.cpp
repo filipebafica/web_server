@@ -11,14 +11,13 @@ CharacterReader::CharacterReader(const char *filePath) : _position(0)
     if (!_inputFile.is_open())
     {
         std::cerr << "Error: Could not open file " << filePath << std::endl;
+        throw std::runtime_error("Error: Could not open file");
     }
 
     std::stringstream bufferStream;
     bufferStream << _inputFile.rdbuf();
     _buffer = bufferStream.str();
 }
-
-CharacterReader::CharacterReader(const std::string &inputString) : _buffer(inputString), _position(0) {}
 
 char CharacterReader::peek()
 {

@@ -1,39 +1,37 @@
 #include <vector>
-#include <csignal>
-#include "./Setup/InitialParametersHandler.cpp"
+#include "./Signals.hpp"
+#include "./Monitor.hpp"
+#include "./CGI/CGI.hpp"
+#include "./Setup/Parser/Parser.hpp"
 #include "./Request/HttpRequestHandler.cpp"
 #include "./Response/HttpResponseHandler.cpp"
-#include "./Monitor.cpp"
-#include "./Webserver.cpp"
-
-int main() {
-    InitialParametersHandler initialParametersHandler1(0);
-    HttpRequestHandler httpRequestHandler1;
-    HttpResponseHandler httpResponseHandler1;
-
-    InitialParametersHandler initialParametersHandler2(10);
-    HttpRequestHandler httpRequestHandler2;
-    HttpResponseHandler httpResponseHandler2;
 
 
-    Webserver webserver1(
-            &initialParametersHandler1,
-            &httpRequestHandler1,
-            &httpResponseHandler1
-    );
+int main(int argc, const char* argv[]) {
+    if (argc < 2) {
+        std::cout << "You must pass a path to the configuration file" << std::endl;
+        return 1;
+    }
 
-    Webserver webserver2(
-            &initialParametersHandler2,
-            &httpRequestHandler2,
-            &httpResponseHandler2
-    );
+    Parser parser(argv[1]);
 
+    std::vector<ServerConfig> serverConfigs = parser.parse();
     std::vector<Webserver*> webservers;
 
-    webservers.push_back(&webserver1);
-    webservers.push_back(&webserver2);
+    for (size_t i = 0; i < serverConfigs.size(); ++i) {
+        webservers.push_back(
+                new Webserver(
+                        &serverConfigs[i],
+                        new HttpRequestHandler,
+                        new HttpResponseHandler,
+                        new CGI
+                )
+        );
+    }
+
 
     Monitor monitor(&webservers);
+    Signals signals(&monitor);
 
     monitor.loop();
 

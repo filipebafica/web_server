@@ -4,7 +4,7 @@
  * @todo It should be implemented tests
  * @todo Write all functions implementation detail
  */
-Lexer::Lexer(CharacterReader &characterReader) : reader(characterReader), position(0)
+Lexer::Lexer(const char* filePath) : _reader(filePath), position(0)
 {
 
     const char *allowedKeywords[] = {
@@ -24,18 +24,18 @@ Lexer::Lexer(CharacterReader &characterReader) : reader(characterReader), positi
         "allow",
         "deny",
         "allowed_methods",
-        "\0",
+        NULL,
     };
 
-    for (size_t i = 0; allowedKeywords[i] != "\0"; i++)
+    for (size_t i = 0; allowedKeywords[i] != NULL; i++)
     {
-        keywords.insert(allowedKeywords[i]);
+        _keywords.insert(allowedKeywords[i]);
     }
 }
 
 void Lexer::skipWhiteSpacesAndComments()
 {
-    char ch = reader.peek();
+    char ch = _reader.peek();
 
     while (ch == ' ' || ch == '\t' || ch == '\n' || ch == '#')
     {
@@ -43,14 +43,14 @@ void Lexer::skipWhiteSpacesAndComments()
         {
             while (ch != '\n' && ch != EOF)
             {
-                ch = reader.consume();
+                ch = _reader.consume();
             }
         }
         else
         {
-            ch = reader.consume();
+            ch = _reader.consume();
         }
-        ch = reader.peek();
+        ch = _reader.peek();
     }
 }
 
@@ -58,16 +58,16 @@ Token Lexer::peek()
 {
     skipWhiteSpacesAndComments();
 
-    while (tokenBuffer.size() <= position)
+    while (_tokenBuffer.size() <= position)
     {
-        char ch = reader.peek();
+        char ch = _reader.peek();
         Token token;
 
         if (ch == EOF)
         {
             token.type = EOF_TOKEN;
             token.value = "";
-            tokenBuffer.push_back(token);
+            _tokenBuffer.push_back(token);
             break;
         }
 
@@ -75,31 +75,31 @@ Token Lexer::peek()
         {
             token.type = SEMICOLON;
             token.value = ";";
-            reader.consume();
+            _reader.consume();
         }
         else if (ch == '{')
         {
             token.type = LEFT_BRACE;
             token.value = "{";
-            reader.consume();
+            _reader.consume();
         }
         else if (ch == '}')
         {
             token.type = RIGHT_BRACE;
             token.value = "}";
-            reader.consume();
+            _reader.consume();
         }
         else if (ch == '"')
         {
-            reader.consume();
+            _reader.consume();
             token.value = "";
 
-            while ((ch = reader.consume()) != '"' && ch != EOF)
+            while ((ch = _reader.consume()) != '"' && ch != EOF)
             {
                 token.value += ch;
             }
 
-            if (keywords.find(token.value) == keywords.end())
+            if (_keywords.find(token.value) == _keywords.end())
             {
                 token.type = IDENTIFIER;
             }
@@ -115,11 +115,11 @@ Token Lexer::peek()
             while (!isspace(ch) && ch != ';' && ch != '{' && ch != '}' && ch != '#' && ch != EOF)
             {
                 token.value += ch;
-                reader.consume();
-                ch = reader.peek();
+                _reader.consume();
+                ch = _reader.peek();
             }
 
-            if (keywords.find(token.value) == keywords.end())
+            if (_keywords.find(token.value) == _keywords.end())
             {
                 token.type = IDENTIFIER;
             }
@@ -129,25 +129,25 @@ Token Lexer::peek()
             }
         }
 
-        tokenBuffer.push_back(token);
+        _tokenBuffer.push_back(token);
     }
 
-    return tokenBuffer[position];
+    return _tokenBuffer[position];
 }
 
 Token Lexer::peek(int idx)
 {
-    while (tokenBuffer.size() <= position + idx)
+    while (_tokenBuffer.size() <= position + idx)
     {
         skipWhiteSpacesAndComments();
-        char ch = reader.peek();
+        char ch = _reader.peek();
         Token token;
 
         if (ch == EOF)
         {
             token.type = EOF_TOKEN;
             token.value = "";
-            tokenBuffer.push_back(token);
+            _tokenBuffer.push_back(token);
             break;
         }
 
@@ -155,31 +155,31 @@ Token Lexer::peek(int idx)
         {
             token.type = SEMICOLON;
             token.value = ";";
-            reader.consume();
+            _reader.consume();
         }
         else if (ch == '{')
         {
             token.type = LEFT_BRACE;
             token.value = "{";
-            reader.consume();
+            _reader.consume();
         }
         else if (ch == '}')
         {
             token.type = RIGHT_BRACE;
             token.value = "}";
-            reader.consume();
+            _reader.consume();
         }
         else if (ch == '"')
         {
-            reader.consume();
+            _reader.consume();
             token.value = "";
 
-            while ((ch = reader.consume()) != '"' && ch != EOF)
+            while ((ch = _reader.consume()) != '"' && ch != EOF)
             {
                 token.value += ch;
             }
 
-            if (keywords.find(token.value) == keywords.end())
+            if (_keywords.find(token.value) == _keywords.end())
             {
                 token.type = IDENTIFIER;
             }
@@ -195,11 +195,11 @@ Token Lexer::peek(int idx)
             while (!isspace(ch) && ch != ';' && ch != '{' && ch != '}' && ch != '#' && ch != EOF)
             {
                 token.value += ch;
-                reader.consume();
-                ch = reader.peek();
+                _reader.consume();
+                ch = _reader.peek();
             }
 
-            if (keywords.find(token.value) == keywords.end())
+            if (_keywords.find(token.value) == _keywords.end())
             {
                 token.type = IDENTIFIER;
             }
@@ -209,14 +209,14 @@ Token Lexer::peek(int idx)
             }
         }
 
-        tokenBuffer.push_back(token);
+        _tokenBuffer.push_back(token);
     }
 
-    if (position + idx > tokenBuffer.size()) {
+    if (position + idx > _tokenBuffer.size()) {
         throw std::runtime_error("token index is out of bounds");
     }
 
-    return tokenBuffer[position + idx];
+    return _tokenBuffer[position + idx];
 }
 
 Token Lexer::consume()
