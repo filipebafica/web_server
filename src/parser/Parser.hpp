@@ -8,6 +8,7 @@
 class Parser
 {
 private:
+    std::set<std::string> _httpMethods;
     Lexer &lexer;
     std::vector<ServerConfig> serverConfigs;
     size_t position;
@@ -21,6 +22,7 @@ private:
     bool isValidErrorPageDirective(Token token);
     bool isValidErrorCode(int code);
     bool isValidAddress(std::string address);
+    bool isValidHttpMethod(std::string method);
 
     void parseServerConfig();
     void parseServerBlock();
@@ -40,10 +42,11 @@ private:
     void parseReturnDirective();
     void parseAllowDirective();
     void parseDenyDirective();
+    void parseAllowedMethods();
+
 
 public:
     Parser(Lexer &lexer);
-
     std::vector<ServerConfig> parse();
 };
 

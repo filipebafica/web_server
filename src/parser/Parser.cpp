@@ -7,7 +7,25 @@
 
 #include "Parser.hpp"
 
-Parser::Parser(Lexer &lexer) : lexer(lexer), position(0) {}
+Parser::Parser(Lexer &lexer) : lexer(lexer), position(0)
+{
+    const char *allowedMethods[] = {
+        "GET",
+        "POST",
+        "PUT",
+        "DELETE",
+        "PATCH",
+        "HEAD",
+        "OPTIONS",
+        "TRACE",
+        "\0",
+    };
+
+    for (size_t i = 0; allowedMethods[i] != "\0"; i++)
+    {
+        _httpMethods.insert(allowedMethods[i]);
+    }
+}
 
 std::vector<ServerConfig> Parser::parse()
 {
@@ -113,7 +131,7 @@ void Parser::parseLocationDirective()
     }
 
     initLocationBlock();
-    serverConfigs.back().getLocation().back().setRoute(token.value);
+    serverConfigs.back().getLocations().back().setRoute(token.value);
     lexer.consume();
 
     token = lexer.peek();
@@ -235,7 +253,7 @@ bool Parser::isValidAddress(std::string address)
 
 void Parser::initLocationBlock()
 {
-    ServerConfig::Location location;
+    ServerLocation location;
     this->serverConfigs.back().setLocationBlock(location);
 }
 
@@ -272,6 +290,9 @@ void Parser::parseLocationBlock()
         } else if (token.type == KEYWORD && token.value == std::string("deny"))
         {
             parseDenyDirective();
+        } else if (token.type == KEYWORD && token.value == std::string("allowed_methods"))
+        {
+            parseAllowedMethods();
         }
         token = lexer.peek();
     }
@@ -286,7 +307,7 @@ void Parser::parseRootDirective()
         throw std::runtime_error("root argument is not a valid identifier");
     }
 
-    this->serverConfigs.back().getLocation().back().setRoot(token.value);
+    this->serverConfigs.back().getLocations().back().setRoot(token.value);
 
     lexer.consume();
     token = lexer.peek();
@@ -306,7 +327,7 @@ void Parser::parseIndexDirective()
         if (token.type != IDENTIFIER) {
             throw std::runtime_error("index argument it not valid identifier");
         }
-        serverConfigs.back().getLocation().back().setIndex(token.value);
+        serverConfigs.back().getLocations().back().setIndex(token.value);
         lexer.consume();
         token = lexer.peek();
     }
@@ -379,7 +400,7 @@ void Parser::parseAutoIndexDirective()
     {
         throw std::runtime_error("invalid use of autoindex directive");
     }
-    serverConfigs.back().getLocation().back().setAutoIndex(token.value);
+    serverConfigs.back().getLocations().back().setAutoIndex(token.value);
     lexer.consume();
 
     token = lexer.peek();
@@ -399,7 +420,7 @@ void Parser::parseProxyPassDirective()
     if (token.value.find("http://") != 0 && token.value.find("https://") != 0) {
         throw std::runtime_error("invalid proxy_pass directive");
     }
-    serverConfigs.back().getLocation().back().setProxyPass(token.value);
+    serverConfigs.back().getLocations().back().setProxyPass(token.value);
     lexer.consume();
 
     token = lexer.peek();
@@ -420,7 +441,7 @@ void Parser::parseAliasDirective()
         throw std::runtime_error("alias argument is not a valid identifier");
     }
 
-    this->serverConfigs.back().getLocation().back().setAlias(token.value);
+    this->serverConfigs.back().getLocations().back().setAlias(token.value);
 
     lexer.consume();
     token = lexer.peek();
@@ -443,10 +464,11 @@ void Parser::parseTryFilesDirective()
 
     while (token.type != SEMICOLON && token.type != EOF_TOKEN)
     {
-        if (token.type != IDENTIFIER || (!isValidPath(token.value) && token.value[0] != '$')) {
+        if (token.type != IDENTIFIER || (!isValidPath(token.value) && token.value[0] != '$'))
+        {
             throw std::runtime_error("tryfiles argument is not a valid identifier");
         }
-        serverConfigs.back().getLocation().back().setTryFiles(token.value);
+        serverConfigs.back().getLocations().back().setTryFiles(token.value);
         lexer.consume();
         token = lexer.peek();
     }
@@ -485,7 +507,7 @@ void Parser::parseReturnDirective()
         lexer.consume();
         token = lexer.peek();
     }
-    serverConfigs.back().getLocation().back().setReturn(code, msg);
+    serverConfigs.back().getLocations().back().setReturn(code, msg);
 
     if (token.type != SEMICOLON) {
         throw std::runtime_error("return directive should  be <error_code> <optional_msg>");
@@ -508,7 +530,7 @@ void Parser::parseAllowDirective()
     {
         throw std::runtime_error("invalid address parameter");
     }
-    serverConfigs.back().getLocation().back().setAllow(token.value);
+    serverConfigs.back().getLocations().back().setAllow(token.value);
     lexer.consume();
 
     token = lexer.peek();
@@ -534,7 +556,7 @@ void Parser::parseDenyDirective()
     {
         throw std::runtime_error("invalid address parameter");
     }
-    serverConfigs.back().getLocation().back().setDeny(token.value);
+    serverConfigs.back().getLocations().back().setDeny(token.value);
     lexer.consume();
 
     token = lexer.peek();
@@ -544,4 +566,43 @@ void Parser::parseDenyDirective()
     }
 
     lexer.consume();    
+}
+
+void Parser::parseAllowedMethods()
+{
+    lexer.consume();
+    Token token = lexer.peek();
+
+    if (token.type == SEMICOLON)
+    {
+        throw std::runtime_error("deny parameter should not be empty");
+    }
+
+    while (token.type != SEMICOLON && token.type != EOF_TOKEN)
+    {
+        if (token.type != IDENTIFIER || !isValidHttpMethod(token.value))
+        {
+            throw std::runtime_error("invalid address parameter");
+        }
+        serverConfigs.back().getLocations().back().setAllowedMethods(token.value);
+        lexer.consume();
+        token = lexer.peek();
+    }
+
+    if (token.type != SEMICOLON)
+    {
+        throw std::runtime_error("allowed_methods parameter should end with semicolon");
+    }
+
+    lexer.consume();
+}
+
+bool Parser::isValidHttpMethod(std::string allowedMethd)
+{
+    if (_httpMethods.find(allowedMethd) == _httpMethods.end())
+    {
+        return false;
+    }
+
+    return true;
 }

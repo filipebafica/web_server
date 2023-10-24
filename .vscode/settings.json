@@ -52,6 +52,7 @@
 		"typeinfo": "cpp",
 		"unordered_set": "cpp",
 		"set": "cpp",
-		"optional": "cpp"
+		"optional": "cpp",
+		"list": "cpp"
 	}
 }
