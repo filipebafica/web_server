@@ -23,6 +23,7 @@ Lexer::Lexer(CharacterReader &characterReader) : reader(characterReader), positi
         "return",
         "allow",
         "deny",
+        "allowed_methods",
         "\0",
     };
 
