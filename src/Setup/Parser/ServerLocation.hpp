@@ -7,23 +7,6 @@
 
 class ServerLocation
 {
-private:
-    std::string _route;
-    std::string _pattern;
-    std::string _root;
-    std::vector<std::string> _index;
-    std::vector<std::string> _allow;
-    std::vector<std::string> _deny;
-    std::string _autoindex;
-    std::string _defaultType;
-    std::map<int,std::string> _return;
-    std::string _limitExcept;
-    std::string _cgi;
-    std::string _proxyPass;
-    std::string _alias;
-    std::vector<std::string> _tryFiles;
-    std::vector<std::string> _allowedMethods;
-
 public:
     std::vector<std::string> &getIndexes();
     std::string &getRoot();
@@ -48,6 +31,23 @@ public:
     void setDeny(std::string address);
     void setRoute(std::string route);
     void setAllowedMethods(std::string allowedMethod);
+
+private:
+    std::string _route;
+    std::string _pattern;
+    std::string _root;
+    std::vector<std::string> _index;
+    std::vector<std::string> _allow;
+    std::vector<std::string> _deny;
+    std::string _autoindex;
+    std::string _defaultType;
+    std::map<int,std::string> _return;
+    std::string _limitExcept;
+    std::string _cgi;
+    std::string _proxyPass;
+    std::string _alias;
+    std::vector<std::string> _tryFiles;
+    std::vector<std::string> _allowedMethods;
 };
 
 #endif // SERVERLOCATION_HPP_

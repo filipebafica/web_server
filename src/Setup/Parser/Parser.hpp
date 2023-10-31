@@ -5,13 +5,19 @@
 #include "Lexer.hpp"
 #include "ServerConfig.hpp"
 
+
 class Parser
 {
+public:
+    Parser(const char *filePath);
+    std::vector<ServerConfig> parse();
+
 private:
-    std::set<std::string> _httpMethods;
-    Lexer &lexer;
-    std::vector<ServerConfig> serverConfigs;
-    size_t position;
+    std::set<std::string>       _httpMethods;
+    Lexer                       _lexer;
+    std::vector<ServerConfig>   _serverConfigs;
+    size_t                      _position;
+    std::set<int>               _occupiedPorts;
 
     void initServerConfig();
     void initLocationBlock();
@@ -43,11 +49,6 @@ private:
     void parseAllowDirective();
     void parseDenyDirective();
     void parseAllowedMethods();
-
-
-public:
-    Parser(Lexer &lexer);
-    std::vector<ServerConfig> parse();
 };
 
 #endif // PARSER_HPP_

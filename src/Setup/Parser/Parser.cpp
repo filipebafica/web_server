@@ -5,9 +5,10 @@
  * 
  */
 
+#include <cstdlib>
 #include "Parser.hpp"
 
-Parser::Parser(Lexer &lexer) : lexer(lexer), position(0)
+Parser::Parser(const char* filePath) : _lexer(filePath), _position(0)
 {
     const char *allowedMethods[] = {
         "GET",
@@ -18,10 +19,10 @@ Parser::Parser(Lexer &lexer) : lexer(lexer), position(0)
         "HEAD",
         "OPTIONS",
         "TRACE",
-        "\0",
+        NULL,
     };
 
-    for (size_t i = 0; allowedMethods[i] != "\0"; i++)
+    for (size_t i = 0; allowedMethods[i] != NULL; i++)
     {
         _httpMethods.insert(allowedMethods[i]);
     }
@@ -29,11 +30,11 @@ Parser::Parser(Lexer &lexer) : lexer(lexer), position(0)
 
 std::vector<ServerConfig> Parser::parse()
 {
-    while (lexer.peek().type != EOF_TOKEN)
+    while (_lexer.peek().type != EOF_TOKEN)
     {
         parseServerConfig();
     }
-    return serverConfigs;
+    return _serverConfigs;
 }
 
 void Parser::parseServerConfig()
@@ -42,12 +43,12 @@ void Parser::parseServerConfig()
     parseToken(std::string("{"));
     parseServerBlock();
     parseToken(std::string("}"));
-    position++;
+    _position++;
 }
 
 void Parser::parseToken(std::string token)
 {
-    Token currToken = lexer.consume();
+    Token currToken = _lexer.consume();
     if (currToken.value != token)
     {
         throw std::runtime_error("invalid token token type");
@@ -61,7 +62,7 @@ void Parser::parseToken(std::string token)
 
 void Parser::parseServerBlock()
 { 
-    Token token = lexer.consume();
+    Token token = _lexer.consume();
     while (token.type != RIGHT_BRACE && token.type != EOF_TOKEN)
     {
         if (token.type == KEYWORD && token.value == std::string("listen"))
@@ -80,45 +81,46 @@ void Parser::parseServerBlock()
         {
             parseClientMaxBodySizeDirective();
         }
-        token = lexer.peek();
+        token = _lexer.peek();
     }
 }
 
 void Parser::initServerConfig()
 {
     ServerConfig serverConfig;
-    serverConfigs.push_back(serverConfig);
+    _serverConfigs.push_back(serverConfig);
 }
 
 void Parser::parseListenDirective()
 {
-    Token token = lexer.consume();
+    Token token = _lexer.consume();
     if (token.type != IDENTIFIER || !isValidPort(token.value))
     {
         throw std::runtime_error("invalid port with value x");
     }
-    int port = std::stoi(token.value);
-    serverConfigs[position].setPort(port);
-    lexer.consume();
+    int port = std::atoi(token.value.c_str());
+    _serverConfigs[_position].setPort(port);
+    _occupiedPorts.insert(port);
+    _lexer.consume();
 }
 
 void Parser::parseServerNameDirective()
 {
-    lexer.consume();
-    Token token = lexer.peek();
+    _lexer.consume();
+    Token token = _lexer.peek();
     while (token.type != SEMICOLON && token.type != EOF_TOKEN) {
         if (!isValidServerName(token.value)) {
             throw std::runtime_error("invalid server name");
         }
-        serverConfigs[position].setServerName(token.value);
-        token = lexer.consume();
+        _serverConfigs[_position].setServerName(token.value);
+        token = _lexer.consume();
     }
 }
 
 void Parser::parseLocationDirective()
 {
-    lexer.consume();
-    Token token = lexer.peek();
+    _lexer.consume();
+    Token token = _lexer.peek();
     
     if (token.type == SEMICOLON)
     {
@@ -131,17 +133,17 @@ void Parser::parseLocationDirective()
     }
 
     initLocationBlock();
-    serverConfigs.back().getLocations().back().setRoute(token.value);
-    lexer.consume();
+    _serverConfigs.back().getLocations().back().setRoute(token.value);
+    _lexer.consume();
 
-    token = lexer.peek();
+    token = _lexer.peek();
     if (token.type != LEFT_BRACE) {
         throw std::runtime_error("invalid directive pattern");
     }
 
     parseLocationBlock();
 
-    lexer.consume();
+    _lexer.consume();
 }
 
 bool Parser::isValidPort(std::string &input)
@@ -159,13 +161,22 @@ bool Parser::isValidPort(std::string &input)
         }
     }
 
-    if (lexer.peek().type != SEMICOLON)
+    if (_lexer.peek().type != SEMICOLON)
     {
         return false;
     }
 
-    int port = std::stoi(input);
-    return port >= 1 && port <= 65535;
+    int port = std::atoi(input.c_str());
+    if (port < 1 || port > 65535)
+    {
+        return false;
+    }
+
+    if (_occupiedPorts.find(port) != _occupiedPorts.end()) {
+        return false;
+    }
+
+    return true;
 }
 
 bool Parser::isValidServerName(std::string& serverName)
@@ -216,7 +227,7 @@ bool Parser::isValidErrorCode(int code)
 
 bool Parser::isValidErrorPageDirective(Token token)
 {
-    int idx = 0;
+    size_t idx = 0;
     std::vector<std::string> errorCodes;
 
     //valida se error_page tem path
@@ -224,7 +235,7 @@ bool Parser::isValidErrorPageDirective(Token token)
     {
         errorCodes.push_back(token.value);
         idx++;
-        token = lexer.peek(idx);
+        token = _lexer.peek(idx);
     }
 
     std::string pagePath = errorCodes.back();
@@ -238,7 +249,7 @@ bool Parser::isValidErrorPageDirective(Token token)
     }
 
     for (idx = 0; idx < errorCodes.size(); idx++) {
-        if (!isValidErrorCode(std::stoi(errorCodes[idx]))) {
+        if (!isValidErrorCode(std::atoi(errorCodes[idx].c_str()))) {
             return false;
         }
     }
@@ -248,19 +259,21 @@ bool Parser::isValidErrorPageDirective(Token token)
 
 bool Parser::isValidAddress(std::string address)
 {
+    // TODO: Check the line below
+    (void)address;
     return true;
 }
 
 void Parser::initLocationBlock()
 {
     ServerLocation location;
-    this->serverConfigs.back().setLocationBlock(location);
+    this->_serverConfigs.back().setLocationBlock(location);
 }
 
 void Parser::parseLocationBlock()
 {
-    lexer.consume();
-    Token token = lexer.peek();
+    _lexer.consume();
+    Token token = _lexer.peek();
     while (token.type != RIGHT_BRACE && token.type != EOF_TOKEN)
     {
         if (token.type == KEYWORD && token.value == std::string("root"))
@@ -294,50 +307,50 @@ void Parser::parseLocationBlock()
         {
             parseAllowedMethods();
         }
-        token = lexer.peek();
+        token = _lexer.peek();
     }
 }
 
 //Talvez seja interessante validar a existência do path
 void Parser::parseRootDirective()
 {
-    lexer.consume();
-    Token token = lexer.peek();
+    _lexer.consume();
+    Token token = _lexer.peek();
     if (token.type != IDENTIFIER || !isValidPath(token.value)) {
         throw std::runtime_error("root argument is not a valid identifier");
     }
 
-    this->serverConfigs.back().getLocations().back().setRoot(token.value);
+    this->_serverConfigs.back().getLocations().back().setRoot(token.value);
 
-    lexer.consume();
-    token = lexer.peek();
+    _lexer.consume();
+    token = _lexer.peek();
     if (token.type != SEMICOLON) {
         throw std::runtime_error("root shouldn't have more than one argument");
     }
 
-    lexer.consume();
+    _lexer.consume();
 }
 
 void Parser::parseIndexDirective()
 {
-    lexer.consume();
-    Token token = lexer.peek();
+    _lexer.consume();
+    Token token = _lexer.peek();
     while (token.type != SEMICOLON && token.type != EOF_TOKEN)
     {
         if (token.type != IDENTIFIER) {
             throw std::runtime_error("index argument it not valid identifier");
         }
-        serverConfigs.back().getLocations().back().setIndex(token.value);
-        lexer.consume();
-        token = lexer.peek();
+        _serverConfigs.back().getLocations().back().setIndex(token.value);
+        _lexer.consume();
+        token = _lexer.peek();
     }
-    lexer.consume();
+    _lexer.consume();
 }
 
 void Parser::parseErrorPageDirective()
 {
-    lexer.consume();
-    Token token  = lexer.peek();
+    _lexer.consume();
+    Token token  = _lexer.peek();
     if (token.type != IDENTIFIER || !isValidErrorPageDirective(token))
     {
         throw std::runtime_error("error_page directive should be: <error_codes1 error_code2 ...> <error_page_path>");
@@ -351,21 +364,21 @@ void Parser::parseErrorPageDirective()
             errorPagePath = token.value;
             break;
         }
-        errorCodes.push_back(std::stoi(token.value));
-        token = lexer.consume();
+        errorCodes.push_back(std::atoi(token.value.c_str()));
+        token = _lexer.consume();
     }
 
-    for (int idx = 0; idx < errorCodes.size(); idx++)
+    for (size_t idx = 0; idx < errorCodes.size(); idx++)
     {
-        serverConfigs.back().setErrorPages(errorCodes[idx], errorPagePath);
+        _serverConfigs.back().setErrorPages(errorCodes[idx], errorPagePath);
     }
-    lexer.consume();
+    _lexer.consume();
 }
 
 void Parser::parseClientMaxBodySizeDirective()
 {
-    lexer.consume();
-    Token token = lexer.peek();
+    _lexer.consume();
+    Token token = _lexer.peek();
 
     char lastChar = token.value[token.value.size() - 1];
     if (lastChar != 'M' && lastChar != 'K' && lastChar != 'G')
@@ -373,89 +386,89 @@ void Parser::parseClientMaxBodySizeDirective()
         throw std::runtime_error("client_max_body_size must be in K, M OR G");
     }
 
-    for (int i = 0; i < token.value.size() - 1; i++)
+    for (size_t i = 0; i < token.value.size() - 1; i++)
     {
         if (!std::isdigit(token.value[i])) {
             throw std::runtime_error("client_max_body_size should be digits");
         }
     }
-    serverConfigs.back().setClientMaxBodySize(token.value);
-    lexer.consume();
+    _serverConfigs.back().setClientMaxBodySize(token.value);
+    _lexer.consume();
     
-    token = lexer.peek();
+    token = _lexer.peek();
     if (token.type != SEMICOLON)
     {
         throw std::runtime_error("client_max_body_size should have only one argument");
     }
 
-    lexer.consume();
+    _lexer.consume();
 }
 
 void Parser::parseAutoIndexDirective()
 {
-    lexer.consume();
-    Token token = lexer.peek();
+    _lexer.consume();
+    Token token = _lexer.peek();
 
     if (token.value != "on" && token.value != "off")
     {
         throw std::runtime_error("invalid use of autoindex directive");
     }
-    serverConfigs.back().getLocations().back().setAutoIndex(token.value);
-    lexer.consume();
+    _serverConfigs.back().getLocations().back().setAutoIndex(token.value);
+    _lexer.consume();
 
-    token = lexer.peek();
+    token = _lexer.peek();
     if (token.type != SEMICOLON)
     {
         throw std::runtime_error("autoindex should have only one argument");
     }
 
-    lexer.consume();
+    _lexer.consume();
 }
 
 void Parser::parseProxyPassDirective()
 {
-    lexer.consume();
-    Token token = lexer.peek();
+    _lexer.consume();
+    Token token = _lexer.peek();
 
     if (token.value.find("http://") != 0 && token.value.find("https://") != 0) {
         throw std::runtime_error("invalid proxy_pass directive");
     }
-    serverConfigs.back().getLocations().back().setProxyPass(token.value);
-    lexer.consume();
+    _serverConfigs.back().getLocations().back().setProxyPass(token.value);
+    _lexer.consume();
 
-    token = lexer.peek();
+    token = _lexer.peek();
     if (token.type != SEMICOLON)
     {
         throw std::runtime_error("proxy_pass should have only one argument");
     }
 
-    lexer.consume();
+    _lexer.consume();
 }
 
 void Parser::parseAliasDirective()
 {
-    lexer.consume();
-    Token token = lexer.peek();
+    _lexer.consume();
+    Token token = _lexer.peek();
 
     if (token.type != IDENTIFIER || !isValidPath(token.value)) {
         throw std::runtime_error("alias argument is not a valid identifier");
     }
 
-    this->serverConfigs.back().getLocations().back().setAlias(token.value);
+    this->_serverConfigs.back().getLocations().back().setAlias(token.value);
 
-    lexer.consume();
-    token = lexer.peek();
+    _lexer.consume();
+    token = _lexer.peek();
     if (token.type != SEMICOLON) {
         throw std::runtime_error("alias shouldn't have more than one argument");
     }
 
-    lexer.consume();
+    _lexer.consume();
 }
 
 void Parser::parseTryFilesDirective()
 {
-    lexer.consume();
-    Token token = lexer.peek();
+    _lexer.consume();
+    Token token = _lexer.peek();
 
     if (token.type == SEMICOLON)
     {
@@ -468,9 +481,9 @@ void Parser::parseTryFilesDirective()
         {
             throw std::runtime_error("tryfiles argument is not a valid identifier");
         }
-        serverConfigs.back().getLocations().back().setTryFiles(token.value);
-        lexer.consume();
-        token = lexer.peek();
+        _serverConfigs.back().getLocations().back().setTryFiles(token.value);
+        _lexer.consume();
+        token = _lexer.peek();
     }
 
     if (token.type != SEMICOLON)
@@ -478,48 +491,48 @@ void Parser::parseTryFilesDirective()
         throw std::runtime_error("tryfiles parameter should end with semicolon");
     }
 
-    lexer.consume();
+    _lexer.consume();
 }
 
 void Parser::parseReturnDirective()
 {
-    lexer.consume();
-    Token token = lexer.peek();
+    _lexer.consume();
+    Token token = _lexer.peek();
 
     if (token.type == SEMICOLON)
     {
         throw std::runtime_error("return parameter should not be empty");
     }
 
-    if (token.type != IDENTIFIER || !isValidErrorCode(std::stoi(token.value)))
+    if (token.type != IDENTIFIER || !isValidErrorCode(std::atoi(token.value.c_str())))
     {
         throw std::runtime_error("invalid return parameter");
     }
-    int code = std::stoi(token.value);
-    lexer.consume();
-    token = lexer.peek();
+    int code = std::atoi(token.value.c_str());
+    _lexer.consume();
+    token = _lexer.peek();
 
     std::string msg;
     if (token.type == SEMICOLON) {
         msg = "";
     } else {
         msg = token.value;
-        lexer.consume();
-        token = lexer.peek();
+        _lexer.consume();
+        token = _lexer.peek();
     }
-    serverConfigs.back().getLocations().back().setReturn(code, msg);
+    _serverConfigs.back().getLocations().back().setReturn(code, msg);
 
     if (token.type != SEMICOLON) {
         throw std::runtime_error("return directive should  be <error_code> <optional_msg>");
     }
 
-    lexer.consume();
+    _lexer.consume();
 }
 
 void Parser::parseAllowDirective()
 {
-    lexer.consume();
-    Token token = lexer.peek();
+    _lexer.consume();
+    Token token = _lexer.peek();
 
     if (token.type == SEMICOLON)
     {
@@ -530,22 +543,22 @@ void Parser::parseAllowDirective()
     {
         throw std::runtime_error("invalid address parameter");
     }
-    serverConfigs.back().getLocations().back().setAllow(token.value);
-    lexer.consume();
+    _serverConfigs.back().getLocations().back().setAllow(token.value);
+    _lexer.consume();
 
-    token = lexer.peek();
+    token = _lexer.peek();
     if (token.type != SEMICOLON)
     {
         throw std::runtime_error("allow directive should be <allowed ip address>");
     }
 
-    lexer.consume();
+    _lexer.consume();
 }
 
 void Parser::parseDenyDirective()
 {
-    lexer.consume();
-    Token token = lexer.peek();
+    _lexer.consume();
+    Token token = _lexer.peek();
 
     if (token.type == SEMICOLON)
     {
@@ -556,22 +569,22 @@ void Parser::parseDenyDirective()
     {
         throw std::runtime_error("invalid address parameter");
     }
-    serverConfigs.back().getLocations().back().setDeny(token.value);
-    lexer.consume();
+    _serverConfigs.back().getLocations().back().setDeny(token.value);
+    _lexer.consume();
 
-    token = lexer.peek();
+    token = _lexer.peek();
     if (token.type != SEMICOLON)
     {
         throw std::runtime_error("deny directive should be <allowed ip address>");
     }
 
-    lexer.consume();    
+    _lexer.consume();    
 }
 
 void Parser::parseAllowedMethods()
 {
-    lexer.consume();
-    Token token = lexer.peek();
+    _lexer.consume();
+    Token token = _lexer.peek();
 
     if (token.type == SEMICOLON)
     {
@@ -584,9 +597,9 @@ void Parser::parseAllowedMethods()
         {
             throw std::runtime_error("invalid address parameter");
         }
-        serverConfigs.back().getLocations().back().setAllowedMethods(token.value);
-        lexer.consume();
-        token = lexer.peek();
+        _serverConfigs.back().getLocations().back().setAllowedMethods(token.value);
+        _lexer.consume();
+        token = _lexer.peek();
     }
 
     if (token.type != SEMICOLON)
@@ -594,7 +607,7 @@ void Parser::parseAllowedMethods()
         throw std::runtime_error("allowed_methods parameter should end with semicolon");
     }
 
-    lexer.consume();
+    _lexer.consume();
 }
 
 bool Parser::isValidHttpMethod(std::string allowedMethd)

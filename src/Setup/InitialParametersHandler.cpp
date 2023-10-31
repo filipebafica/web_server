@@ -1,6 +1,6 @@
-#include "../Interfaces/IInitialParametersHandler.hpp"
+#include "../Interfaces/IServerConfig.hpp"
 
-class InitialParametersHandler : public IInitialParametersHandler
+class InitialParametersHandler : public IServerConfig
 {
 public:
     int i;

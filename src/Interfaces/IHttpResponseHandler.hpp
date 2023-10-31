@@ -9,6 +9,7 @@ public:
             const char* headers,
             const char* content
     ) const = 0;
+    virtual ~IHttpResponseHandler() {};
 };
 
 #endif //I_HTTP_RESPONSE_HANDLER_

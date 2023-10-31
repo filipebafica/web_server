@@ -1,6 +1,15 @@
 #include "ServerConfig.hpp"
 
-const std::vector<int> &ServerConfig::getPort() const
+ServerConfig::ServerConfig() {
+    _errorPages[404] = "./static/404-Page.html";
+    _errorPages[405] = "./static/405-Page.html";
+    _errorPages[500] = "./static/500-Page.html";
+    _errorPages[502] = "./static/502-Page.html";
+}
+
+ServerConfig::~ServerConfig() {}
+
+std::vector<int> ServerConfig::getListeningPorts()
 {
     return this->_port;
 }
@@ -15,7 +24,7 @@ const std::string &ServerConfig::getHost() const
     return this->_host;
 }
 
-const std::map<int,std::string> &ServerConfig::getErrorPages() const
+const std::map<int,std::string> ServerConfig::getErrorPages() const
 {
     return this->_errorPages;
 }
@@ -68,27 +77,22 @@ void ServerConfig::setLocationBlock(ServerLocation location)
 std::string ServerConfig::getResources(std::string method, std::string route)
 {
     std::string resource("");
-    try {
-        int locationPosition = selectLocationPosition(route);
-        if (!_isMethodAllowed(method, locationPosition))
-        {
-            throw std::runtime_error("specified method not allowed");
-        }
-        resource = _getResourcePathFile(locationPosition, route);
-        std::cout << "### DEBUG ###" << resource << std::endl;
-    } catch (const std::runtime_error& e) {
-        std::cerr << e.what() << std::endl;
+    int locationPosition = _selectLocationPosition(route);
+    if (!_isMethodAllowed(method, locationPosition))
+    {
+        throw MethodNotAllowedException();
     }
+    resource = _getResourcePathFile(locationPosition, route);
     return resource;
 }
 
-int ServerConfig::selectLocationPosition(std::string route)
+int ServerConfig::_selectLocationPosition(std::string route)
 {
     std::vector<ServerLocation> locations = getLocations();
     size_t maxLength = 0;
     int locationPosition = -1;
     
-    for (int i = 0; i < locations.size(); i++)
+    for (size_t i = 0; i < locations.size(); i++)
     {
         if (route.find(locations[i].getRoute()) == 0 && locations[i].getRoute().length() > maxLength) {
             locationPosition = i;
@@ -110,10 +114,10 @@ bool ServerConfig::_isMethodAllowed(std::string method, int selectedLocation)
 
     if (allowedMethods.empty())
     {
-        return true;
+        return false;
     }
 
-    for (int i = 0; i < allowedMethods.size(); i++)
+    for (size_t i = 0; i < allowedMethods.size(); i++)
     {
         if (allowedMethods[i] == method)
         {
@@ -130,17 +134,16 @@ std::string ServerConfig::_getResourcePathFile(int locationPosition, std::string
     ServerLocation location = locations[locationPosition];
     std::string locationRoot = location.getRoot();
 
-    std::string pathFile = "";
-    if (!_isRequestedRouteDirectory(requestedRoute))
+    if (_isRequestedRouteDirectory(requestedRoute))
     {
-        std::string pathFile = _getResourcePathFromDirectory(locationPosition, locationRoot, requestedRoute);
+        return(_getResourcePathFromDirectory(locationPosition, locationRoot, requestedRoute));
     }
-    return pathFile;
+    return(_getResourcePathFromFile(locationPosition, locationRoot, requestedRoute));
 }
 
 bool ServerConfig::_isRequestedRouteDirectory(std::string requestedRoute)
 {
-    if (*requestedRoute.end() == '/')
+    if (requestedRoute[requestedRoute.length() - 1] == '/')
     {
         return true;
     }
@@ -157,30 +160,88 @@ std::string ServerConfig::_getResourcePathFromDirectory(int locationPosition, st
     std::string fullPath = locationRoot + requestedRoute;
     std::vector<std::string> fileNames = location.getIndexes();
 
-    //Refazer daqui pra baixo pois é para pegar apenas o index ou posso mudar para pega todo o path;
-    std::string fileName = _getIndexFilePath(fullPath, fileNames);
-
-    return fileName;
+    std::string filePath = _getIndexFilePath(fullPath, fileNames);
+    return filePath;
 }
 
 std::string ServerConfig::_getIndexFilePath(std::string path, std::vector<std::string> fileNames)
 {
     std::string fileName = "";
-    std::cout << fileNames.size() << std::endl;
-    for (int i = 0; i < fileNames.size(); i++)
+    for (size_t i = 0; i < fileNames.size(); i++)
     {
-        std::cout << fileNames[i] << std::endl;
+        fileName = path + fileNames[i];
         if (_fileExists(fileName))
         {
             return fileName;
         }
     }
     
-    throw std::runtime_error("file doesn't exists");
+    throw RouteNotFoundException();
 }
 
-bool ServerConfig::_fileExists(std::string& filename)
+bool ServerConfig::_fileExists(std::string& fileName)
 {
-    std::ifstream file(filename.c_str());
-    return file.good();
+    struct stat buffer;
+    if (stat(fileName.c_str(), &buffer) == -1)
+    {
+        return false;
+    }
+    return true;
+}
+
+std::string ServerConfig::_getResourcePathFromFile(int locationPosition, std::string locationRoot, std::string requestedRoute)
+{
+    std::vector<ServerLocation> locations = getLocations();
+    ServerLocation location = locations[locationPosition];
+
+    std::string fileName = locationRoot + requestedRoute;
+    if (!_fileExists(fileName))
+    {
+        throw RouteNotFoundException();
+    }
+    return fileName;
+}
+
+std::string ServerConfig::_getFileFromRoute(std::string requestedRoute)
+{
+    size_t lastSlashPos = requestedRoute.find_last_of('/');
+    if (lastSlashPos != std::string::npos)
+    {
+        std::string file = requestedRoute.substr(lastSlashPos + 1);
+        return file;
+    }
+    return requestedRoute;
+}
+
+std::string ServerConfig::getRoot(std::string method, std::string route)
+{
+    std::string root("");
+    std::vector<ServerLocation> locations = getLocations();
+    int locationPosition = _selectLocationPosition(route);
+    if (!_isMethodAllowed(method, locationPosition))
+    {
+        throw std::runtime_error("specified method not allowed");
+    }
+    root = locations[locationPosition].getRoot();
+    return root;
+}
+
+std::string ServerConfig::getErrorPage(int statusCode)
+{
+    const std::map<int, std::string> errorPages = getErrorPages();
+    struct stat buffer;
+    if (errorPages.empty()) {
+        if (stat(DEFAULT_ERROR_PAGE_PATH.c_str(), &buffer) == -1) {
+            throw std::runtime_error("there is no default error page");
+        }
+        return DEFAULT_ERROR_PAGE_PATH;
+    }
+
+    std::map<int, std::string>::const_iterator it = errorPages.find(statusCode);
+
+    if (it != errorPages.end()) {
+        return it->second;
+    } else {
+        throw std::runtime_error("there is no error page for specified error");
+    }
 }
