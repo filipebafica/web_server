@@ -162,6 +162,8 @@ void Webserver::send(int clientSocket) {
     try {
         string method = this->httpRequestHandler->getHeader("Method");
         string route = this->httpRequestHandler->getHeader("Route");
+        string contentType = this->httpRequestHandler->getHeader("Content-Type");
+
         string resources = this->serverConfig->getResources(
                 method,
                 route
@@ -172,7 +174,7 @@ void Webserver::send(int clientSocket) {
                     clientSocket,
                     200,
                     "",
-                    this->getContent(resources.c_str()).c_str()
+                    this->getContent(resources).c_str()
             );
 
             return;
@@ -180,15 +182,21 @@ void Webserver::send(int clientSocket) {
 
         // TODO: Send request to CGI
         if (string("POST") == method) {
-            this->uploadFile(
-                    this->getContent(resources.c_str()).c_str(),
-                    ""
-            );
+            if (contentType.find("multipart/form-data") == std::string::npos) {
+                this->httpResponseHandler->send(
+                        clientSocket,
+                        200,
+                        "",
+                        "success"
+                );
+            }
+
+            CGIResponse* cgiResponse = this->cgi->execute(this->httpRequestHandler);
 
             this->httpResponseHandler->send(
                     clientSocket,
-                    201,
-                    "",
+                    cgiResponse->getCGIStatus(),
+                    cgiResponse->getCGIHeaders(),
                     "file was uploaded successfully"
             );
 

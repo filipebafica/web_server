@@ -68,7 +68,7 @@ CGIResponse* CGI::execute(IHttpRequestHandler *httpRequestHandler) const {
 
         execve(CGI_PATH, args, envp.data());
 
-        return new CGIResponse(NULL);
+        return new CGIResponse("");
 
     } else {
         /* Parent process */
