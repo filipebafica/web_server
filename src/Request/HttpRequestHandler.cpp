@@ -97,8 +97,16 @@ private:
             Accept-Language: en-US,en;q=0.5
          ") */
 
+
+        // Splits the request blocks (header and body)
+        std::vector<std::string> blocks = this->tokenize(this->buffer, HEADER_AND_BODY_DELIMITER);
+
+        if (blocks.empty()) {
+            return;
+        }
+
         // Splits the request into lines
-        std::vector<std::string> lines = this->tokenize(this->buffer, END_OF_LINE_DELIMITER);
+        std::vector<std::string> lines = this->tokenize(blocks[0].c_str(), END_OF_LINE_DELIMITER);
 
         if (lines.empty()) {
             return;
