@@ -4,6 +4,7 @@
 #include <exception>
 #include <string>
 #include <vector>
+//#include "../Setup/Parser/Resources.hpp"
 #include <Resources.hpp>
 
 class MethodNotAllowedException: public std::exception {};
