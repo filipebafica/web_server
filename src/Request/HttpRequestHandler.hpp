@@ -8,6 +8,7 @@
 #include <iostream>
 #include <unistd.h>
 #include <cstdlib>
+#include <cstdio>
 
 #include <IHttpRequestHandler.hpp>
 
