@@ -83,7 +83,7 @@ Resources ServerConfig::getResources(std::string method, std::string route)
         throw MethodNotAllowedException();
     }
     resource = this->_getResourcePathFile(locationPosition, route);
-    return Resources(std::string("/home/filipebafica/other_projects/web_server/src"), true);
+    return Resources(resource, false);
 }
 
 int ServerConfig::_selectLocationPosition(std::string route)
