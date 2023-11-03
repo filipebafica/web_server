@@ -8,27 +8,20 @@
 #include <unistd.h>
 #include <vector>
 
-#include "./Webserver.hpp"
-
-using std::list;
-using std::map;
-using std::pair;
-using std::vector;
-
-using std::cerr;
-using std::endl;
+#include <Webserver.hpp>
 
 class Monitor {
  private:
-    vector<Webserver*>* webservers;
-    list<int> clientSockets;
-    vector<struct pollfd> pollFds;
-    map<int, Webserver*> fdToWebserverMap;
+    std::vector<Webserver*>* webservers;
+    std::list<int> clientSockets;
+    std::vector<struct pollfd> pollFds;
+    std::map<int, Webserver*> fdToWebserverMap;
+
     int numberOfServers;
     volatile bool monitorRunning;
 
  public:
-    Monitor(vector<Webserver*>* webservers);
+    Monitor(std::vector<Webserver*>* webservers);
     ~Monitor();
 
     void loop(void);

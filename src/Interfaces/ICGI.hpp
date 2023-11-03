@@ -1,11 +1,13 @@
 #ifndef I_CGI_HPP_
 #define I_CGI_HPP_
 
-#include "../CGI/CGIResponse.hpp"
+#include <CGIRequest.hpp>
+#include <CGIResponse.hpp>
+#include <IHttpRequestHandler.hpp>
 
 class ICGI {
 public:
-    virtual CGIResponse* execute(IHttpRequestHandler *httpRequestHandler) const = 0;
+    virtual CGIResponse* execute(const CGIRequest& request) const = 0;
     virtual ~ICGI() {};
 };
 

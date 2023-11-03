@@ -9,8 +9,8 @@
 
 #include <sys/stat.h>
 
-#include "ServerLocation.hpp"
-#include "../../Interfaces/IServerConfig.hpp"
+#include <ServerLocation.hpp>
+#include <IServerConfig.hpp>
 
 class ServerConfig: public IServerConfig
 {
@@ -20,7 +20,7 @@ public:
     ServerConfig();
     ~ServerConfig();
 
-    std::string               getResources(std::string method, std::string route);
+    Resources                 getResources(std::string method, std::string route);
     std::string               getRoot(std::string method, std::string route);
     std::string               getErrorPage(int statusCode);
     std::vector<int>          getListeningPorts();

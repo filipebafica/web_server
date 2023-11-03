@@ -1,26 +1,26 @@
-#include "./CGI.hpp"
+#include <CGI.hpp>
 
 #define BUFFSIZE    4096
 #define CGI_BIN     "php-cgi"
-#define CGI_PATH    "/usr/bin/php-cgi"
+// #define CGI_PATH    "/usr/bin/php-cgi"
 
 CGI::CGI(void) {}
 
 CGI::~CGI() {}
 
-CGIResponse* CGI::execute(IHttpRequestHandler *httpRequestHandler) const {
+CGIResponse* CGI::execute(const CGIRequest& request) const {
     int pipe_fd[2];
 
     if (pipe(pipe_fd) == -1) {
-        perror("pipe() failed");
-        exit(1);
+        std::cerr << "pipe() failed" << std::endl;
+        return new CGIResponse(500);
     }
 
     pid_t p = fork();
 
     if (p < 0) {
         std::cerr << "fork() failed" << std::endl;
-        exit(1);
+        return new CGIResponse(500);
     }
 
     if (!p) {
@@ -36,54 +36,41 @@ CGIResponse* CGI::execute(IHttpRequestHandler *httpRequestHandler) const {
         envp.setVariable("REQUEST_SCHEME", "http");
         envp.setVariable("SERVER_PROTOCOL", "HTTP/1.1");
 
-        const string &uri       = httpRequestHandler->getHeader("Route");
-        const string &method    = httpRequestHandler->getHeader("Method");
-        const string &accept    = httpRequestHandler->getHeader("Accept");
-        const string &agent     = httpRequestHandler->getHeader("User-Agent");
+        envp.setVariable("PATH_INFO", request.uri.substr(1));
+        envp.setVariable("SCRIPT_NAME", CGI_PATH);
+        envp.setVariable("REQUEST_URI", request.uri);
+        envp.setVariable("REQUEST_METHOD", request.method);
+        envp.setVariable("HTTP_ACCEPT", request.accept);
+        envp.setVariable("HTTP_USER_AGENT", request.agent);
 
-        envp.setVariable("PATH_INFO", uri); /** TODO: Decode URI */
-        envp.setVariable("SCRIPT_NAME", uri);
-        envp.setVariable("REQUEST_URI", uri);
-        envp.setVariable("REQUEST_METHOD", method);
-        envp.setVariable("HTTP_ACCEPT", accept);
-        envp.setVariable("HTTP_USER_AGENT", agent);
-        /**
-         * TODO: Add methods to get the following key-values:
-         *  - query string
-         *  - CONTENT_LENGTH
-         *  - CONTENT_TYPE
-
-        const string &serverRootPath    = getServerRootPath();
-
-        envp.setVariable("SCRIPT_FILENAME", serverRootPath + uri); // Full path to script file
-        envp.setVariable("DOCUMENT_ROOT", serverRootPath); // Server root path
-        envp.setVariable("CONTENT_LENGTH", getContentLen());
-        envp.setVariable("CONTENT_TYPE", getContentType());
-
-        if (hasQueryString()) {
-            envp.setVariable("QUERY_STRING", getQueryString());
+        envp.setVariable("DOCUMENT_ROOT", request.serverRoot);
+        if (request.method == "POST") {
+            envp.setVariable("CONTENT_LENGTH", request.contentLen);
+            envp.setVariable("CONTENT_TYPE", request.contentType);
+            envp.setVariable("SCRIPT_FILENAME", "testing/postFile.php");
+        } else {
+            /* Full path to script file */
+            envp.setVariable("SCRIPT_FILENAME", request.serverRoot + request.uri);
         }
-        */
+
+        if (request.querystring.size()) {
+            envp.setVariable("QUERY_STRING", request.querystring);
+        }
         char *args[2] = { (char*)CGI_BIN, NULL };
 
+        /* CGI_PATH Being defined on Makefile */
         execve(CGI_PATH, args, envp.data());
-
-        return new CGIResponse("");
-
-    } else {
-        /* Parent process */
-        close(pipe_fd[1]);
-
-        string  rawCGIResponse;
-        char    buffer[BUFFSIZE];
-
-        while (read(pipe_fd[0], buffer, BUFFSIZE) > 0) {
-            rawCGIResponse.append(buffer);
-        }
-        int status;
-
-        waitpid(p, &status, 0);
-
-        return new CGIResponse(rawCGIResponse);
+        exit(1);
     }
+    /* Parent process */
+    close(pipe_fd[1]);
+
+    std::string rawCGIResponse;
+    char        buffer[BUFFSIZE];
+
+    while (read(pipe_fd[0], buffer, BUFFSIZE) > 0) {
+        rawCGIResponse.append(buffer);
+    }
+    waitpid(p, NULL, 0);
+    return new CGIResponse(rawCGIResponse);
 }

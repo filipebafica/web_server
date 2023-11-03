@@ -1,5 +1,5 @@
-#include "./Monitor.hpp"
-#include "./Signals.hpp"
+#include <Monitor.hpp>
+#include <Signals.hpp>
 
 Signals::Signals(Monitor *monitor) {
     Signals::monitor = monitor;

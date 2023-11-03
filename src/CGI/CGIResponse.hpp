@@ -2,12 +2,10 @@
 #include <string>
 #include <vector>
 
-using std::string;
-using std::vector;
-
 class CGIResponse {
  public:
-    explicit CGIResponse(const string&);
+    explicit CGIResponse(int statusCode);
+    explicit CGIResponse(const std::string&);
     ~CGIResponse();
 
     int         getCGIStatus(void) const;
@@ -15,8 +13,8 @@ class CGIResponse {
     const char* getCGIBody(void) const;
 
  private:
-    int              _status;
-    string           _headers;
-    string           _body;
-    vector<string>   _responseParts;
+    int                       _status;
+    std::string               _headers;
+    std::string               _body;
+    std::vector<std::string>  _responseParts;
 };

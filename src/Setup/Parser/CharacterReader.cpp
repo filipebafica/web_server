@@ -1,4 +1,4 @@
-#include "CharacterReader.hpp"
+#include <CharacterReader.hpp>
 
 /**
  * @todo It should be implemented tests

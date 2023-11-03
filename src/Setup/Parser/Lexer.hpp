@@ -3,7 +3,7 @@
 
 #include <vector>
 #include <set>
-#include "CharacterReader.hpp"
+#include <CharacterReader.hpp>
 
 enum TokenType
 {
