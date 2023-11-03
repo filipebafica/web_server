@@ -132,6 +132,8 @@ void HttpRequestHandler::parseRequestBody(void) {
 void HttpRequestHandler::setChunkedRequest(std::string chunkedBody) {
     std::string body;
     size_t pos = 0;
+    char contentLength[20];
+
     while (pos < chunkedBody.size()) {
         // Finds the position of the CRLF (END_OF_LINE_DELIMITER)
         size_t crlfPos = chunkedBody.find(END_OF_LINE_DELIMITER, pos);
@@ -159,7 +161,10 @@ void HttpRequestHandler::setChunkedRequest(std::string chunkedBody) {
         pos += chunkSize + strlen(END_OF_LINE_DELIMITER);
     }
 
+    std::sprintf(contentLength, "%ld", body.size());
+
     this->request["Body"] = body;
+    this->request["Content-Length"] = std::string(contentLength);
 
     std::cout << "********** BODY **********" << std::endl;
     std::cout <<  this->request["Body"] << std::endl;

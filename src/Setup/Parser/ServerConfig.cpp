@@ -74,7 +74,7 @@ void ServerConfig::setLocationBlock(ServerLocation location)
     this->_locations.push_back(location);
 }
 
-std::string ServerConfig::getResources(std::string method, std::string route)
+Resources ServerConfig::getResources(std::string method, std::string route)
 {
     std::string resource("");
     int locationPosition = this->_selectLocationPosition(route);
@@ -83,7 +83,7 @@ std::string ServerConfig::getResources(std::string method, std::string route)
         throw MethodNotAllowedException();
     }
     resource = this->_getResourcePathFile(locationPosition, route);
-    return resource;
+    return Resources(std::string("/home/filipebafica/other_projects/web_server/src"), true);
 }
 
 int ServerConfig::_selectLocationPosition(std::string route)

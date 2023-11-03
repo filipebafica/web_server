@@ -130,7 +130,7 @@ std::vector<int> Webserver::getServerSockets(void) const {
     return this->serverSockets;
 }
 
-std::string Webserver::getResources(std::string& method, std::string& route) const {
+Resources Webserver::getResources(std::string& method, std::string& route) const {
     return this->serverConfig->getResources(method, route);
 }
 
@@ -164,65 +164,20 @@ void Webserver::send(int clientSocket) {
         std::string route = this->httpRequestHandler->getHeader("Route");
         std::string contentType = this->httpRequestHandler->getHeader("Content-Type");
 
-        std::string resources = this->serverConfig->getResources(
-                method,
-                route
-        );
-
         if (std::string("GET") == method) {
-            this->httpResponseHandler->send(
-                    clientSocket,
-                    200,
-                    "",
-                    this->getContent(resources).c_str()
-            );
+            this->handleGET(clientSocket, method, route, contentType);
 
             return;
         }
 
-        // TODO: Send request to CGI
         if (std::string("POST") == method) {
-            if (contentType.find("multipart/form-data") == std::string::npos) {
-                this->httpResponseHandler->send(
-                        clientSocket,
-                        200,
-                        "",
-                        "success"
-                );
-            }
-
-            CGIRequest cgiReq = CGIRequest(
-                method,
-                this->httpRequestHandler->getHeader("Accept"),
-                this->httpRequestHandler->getHeader("Agent"),
-                this->serverConfig->getRoot(method, route),
-                this->httpRequestHandler->getHeader("DecodedURI"),
-                this->httpRequestHandler->getHeader("QueryString"),
-                this->httpRequestHandler->getHeader("Content-Length"),
-                contentType,
-                this->httpRequestHandler->getHeader("Body")
-            );
-            CGIResponse* cgiResponse = this->cgi->execute(cgiReq);
-
-            this->httpResponseHandler->send(
-                    clientSocket,
-                    cgiResponse->getCGIStatus(),
-                    cgiResponse->getCGIHeaders(),
-                    "file was uploaded successfully"
-            );
+            this->handlePOST(clientSocket, method, route, contentType);
 
             return;
         }
 
         if (std::string("DELETE") == method) {
-            this->httpResponseHandler->send(
-                    clientSocket,
-                    200,
-                    "",
-                    "DELETE has been made"
-            );
-
-            return;
+            this->handleDELETE(clientSocket);
         }
 
     } catch (MethodNotAllowedException& exception) {
@@ -240,7 +195,112 @@ void Webserver::send(int clientSocket) {
                 "",
                 this->getContent(this->getErrorPage(404)).c_str()
         );
+
+    } catch (std::exception& exception) {
+        this->httpResponseHandler->send(
+                clientSocket,
+                500,
+                "",
+                "Internal Server Error"
+        );
     }
+}
+
+void Webserver::handleGET(
+        int clientSocket,
+        std::string& method,
+        std::string& route,
+        std::string& contentType
+    ) const {
+    Resources resources = this->serverConfig->getResources(method, route);
+
+    if (resources.isDirectory) {
+        this->httpResponseHandler->send(
+                clientSocket,
+                403,
+                "",
+                this->getDirectoryFiles(resources.path).c_str()
+        );
+
+        return;
+    }
+
+    if (this->httpRequestHandler->getHeader("isPHP") == std::string("YES")) {
+        CGIRequest cgiReq = CGIRequest(
+                method,
+                this->httpRequestHandler->getHeader("Accept"),
+                this->httpRequestHandler->getHeader("Agent"),
+                this->serverConfig->getRoot(method, route),
+                this->httpRequestHandler->getHeader("DecodedURI"),
+                this->httpRequestHandler->getHeader("QueryString"),
+                this->httpRequestHandler->getHeader("Content-Length"),
+                contentType,
+                this->httpRequestHandler->getHeader("Body")
+        );
+
+        CGIResponse* cgiResponse = this->cgi->execute(cgiReq);
+
+        this->httpResponseHandler->send(
+                clientSocket,
+                cgiResponse->getCGIStatus(),
+                cgiResponse->getCGIHeaders(),
+                cgiResponse->getCGIBody()
+        );
+    }
+
+    this->httpResponseHandler->send(
+            clientSocket,
+            200,
+            "",
+            this->getContent(resources.path).c_str()
+    );
+}
+
+void Webserver::handlePOST(
+        int clientSocket,
+        std::string& method,
+        std::string& route,
+        std::string& contentType
+    ) const {
+
+    if (contentType.find("multipart/form-data") == std::string::npos) {
+        this->httpResponseHandler->send(
+                clientSocket,
+                200,
+                "",
+                "success"
+        );
+    }
+
+    CGIRequest cgiReq = CGIRequest(
+            method,
+            this->httpRequestHandler->getHeader("Accept"),
+            this->httpRequestHandler->getHeader("Agent"),
+            this->serverConfig->getRoot(method, route),
+            this->httpRequestHandler->getHeader("DecodedURI"),
+            this->httpRequestHandler->getHeader("QueryString"),
+            this->httpRequestHandler->getHeader("Content-Length"),
+            contentType,
+            this->httpRequestHandler->getHeader("Body")
+    );
+
+    CGIResponse* cgiResponse = this->cgi->execute(cgiReq);
+
+    this->httpResponseHandler->send(
+            clientSocket,
+            cgiResponse->getCGIStatus(),
+            cgiResponse->getCGIHeaders(),
+            "file was uploaded successfully"
+    );
+}
+
+void Webserver::handleDELETE(int clientSocket) {
+    this->httpResponseHandler->send(
+            clientSocket,
+            200,
+            "",
+            "DELETE has been made"
+    );
 }
 
 std::string Webserver::getContent(std::string path) const {
@@ -257,8 +317,27 @@ std::string Webserver::getContent(std::string path) const {
     return content;
 }
 
-void Webserver::uploadFile(const char* content, const char* fileName) const {
-    FILE* destinationFile = fopen(fileName, "w+");
-    fwrite(content, strlen(content), strlen(content), destinationFile);
-    fclose(destinationFile);
+std::string Webserver::getDirectoryFiles(std::string path) const {
+    DIR* directory = opendir(path.c_str());
+
+    if (!directory) {
+        throw std::runtime_error("Something went wrong while opening a directory");
+    }
+
+    struct dirent* entry;
+    std::string entries;
+
+    while ((entry = readdir(directory)) != NULL) {
+        // Filter out current directory and parent directory entries
+        if (strcmp(entry->d_name, ".") != 0 && strcmp(entry->d_name, "..") != 0) {
+            entries += entry->d_name;
+            entries += std::string("\n");
+        }
+    }
+
+    closedir(directory);
+
+    return entries;
 }
+
+
