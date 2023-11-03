@@ -1,4 +1,4 @@
-#include "Webserver.hpp"
+#include <Webserver.hpp>
 
 Webserver::Webserver(
         IServerConfig* serverConfig,
@@ -51,7 +51,7 @@ void Webserver::createSocket(void) {
             - SOCK stands for Socket Type.
             - SOCK_STREAM corresponds to a stream-oriented socket (guarantee the order).
     */
-    vector<int> ports = this->serverConfig->getListeningPorts();
+    std::vector<int> ports = this->serverConfig->getListeningPorts();
 
     for (size_t i = 0; i < ports.size(); ++i) {
         int socketDescriptor = socket(AF_INET, SOCK_STREAM, 0);
@@ -83,7 +83,7 @@ void Webserver::setupAddress(void) {
         - SIN_ADDR.S_ADDR: IP address of the host.
             INADDR_ANY allows binding to all available interfaces.
     */
-    vector<int> ports = this->serverConfig->getListeningPorts();
+    std::vector<int> ports = this->serverConfig->getListeningPorts();
     for (size_t i = 0; i < ports.size() ; ++i) {
         struct sockaddr_in* address = new struct sockaddr_in;
 
@@ -126,15 +126,15 @@ void Webserver::startListening(void) const {
     }
 }
 
-vector<int> Webserver::getServerSockets(void) const {
+std::vector<int> Webserver::getServerSockets(void) const {
     return this->serverSockets;
 }
 
-string Webserver::getResources(string& method, string& route) const {
+std::string Webserver::getResources(std::string& method, std::string& route) const {
     return this->serverConfig->getResources(method, route);
 }
 
-string Webserver::getErrorPage(int statusCode) const {
+std::string Webserver::getErrorPage(int statusCode) const {
     return this->serverConfig->getErrorPage(statusCode);
 }
 
@@ -154,22 +154,22 @@ void Webserver::setAllowResponse(bool isResponseAllowed) {
     this->allowResponse = isResponseAllowed;
 }
 
-const std::map<string, string>& Webserver::getRequest() const {
+const std::map<std::string, std::string>& Webserver::getRequest() const {
     return this->httpRequestHandler->getRequest();
 }
 
 void Webserver::send(int clientSocket) {
     try {
-        string method = this->httpRequestHandler->getHeader("Method");
-        string route = this->httpRequestHandler->getHeader("Route");
-        string contentType = this->httpRequestHandler->getHeader("Content-Type");
+        std::string method = this->httpRequestHandler->getHeader("Method");
+        std::string route = this->httpRequestHandler->getHeader("Route");
+        std::string contentType = this->httpRequestHandler->getHeader("Content-Type");
 
-        string resources = this->serverConfig->getResources(
+        std::string resources = this->serverConfig->getResources(
                 method,
                 route
         );
 
-        if (string("GET") == method) {
+        if (std::string("GET") == method) {
             this->httpResponseHandler->send(
                     clientSocket,
                     200,
@@ -181,7 +181,7 @@ void Webserver::send(int clientSocket) {
         }
 
         // TODO: Send request to CGI
-        if (string("POST") == method) {
+        if (std::string("POST") == method) {
             if (contentType.find("multipart/form-data") == std::string::npos) {
                 this->httpResponseHandler->send(
                         clientSocket,
@@ -191,7 +191,18 @@ void Webserver::send(int clientSocket) {
                 );
             }
 
-            CGIResponse* cgiResponse = this->cgi->execute(this->httpRequestHandler);
+            CGIRequest cgiReq = CGIRequest(
+                method,
+                this->httpRequestHandler->getHeader("Accept"),
+                this->httpRequestHandler->getHeader("Agent"),
+                this->serverConfig->getRoot(method, route),
+                this->httpRequestHandler->getHeader("DecodedURI"),
+                this->httpRequestHandler->getHeader("QueryString"),
+                this->httpRequestHandler->getHeader("Content-Length"),
+                contentType,
+                this->httpRequestHandler->getHeader("Body")
+            );
+            CGIResponse* cgiResponse = this->cgi->execute(cgiReq);
 
             this->httpResponseHandler->send(
                     clientSocket,
@@ -203,7 +214,7 @@ void Webserver::send(int clientSocket) {
             return;
         }
 
-        if (string("DELETE") == method) {
+        if (std::string("DELETE") == method) {
             this->httpResponseHandler->send(
                     clientSocket,
                     200,
@@ -232,13 +243,13 @@ void Webserver::send(int clientSocket) {
     }
 }
 
-string Webserver::getContent(std::string path) const {
+std::string Webserver::getContent(std::string path) const {
     std::ifstream file;
-    string content;
-    string line;
+    std::string content;
+    std::string line;
 
     file.open(path.c_str(), std::ios::binary);
-    while(getline(file, line)) {
+    while (std::getline(file, line)) {
         content += line;
     }
     file.close();

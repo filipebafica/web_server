@@ -2,8 +2,8 @@
 #define PARSER_HPP_
 
 #include <string>
-#include "Lexer.hpp"
-#include "ServerConfig.hpp"
+#include <Lexer.hpp>
+#include <ServerConfig.hpp>
 
 
 class Parser

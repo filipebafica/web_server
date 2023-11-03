@@ -18,7 +18,7 @@ public:
     virtual std::string getErrorPage(int statusCode) = 0;
     virtual std::string getRoot(std::string method, std::string route) = 0;
     virtual std::vector<int> getListeningPorts() = 0;
-    
+    virtual ~IServerConfig() {};
 };
 
 #endif //I_SERVER_CONFIG_

@@ -9,13 +9,12 @@
 #include <map>
 #include <netinet/in.h>
 #include <sys/socket.h>
-#include "./Interfaces/IServerConfig.hpp"
-#include "./Interfaces/IHttpRequestHandler.hpp"
-#include "./Interfaces/IHttpResponseHandler.hpp"
-#include "./Interfaces/ICGI.hpp"
 
-using std::string;
-using std::vector;
+#include <IServerConfig.hpp>
+#include <IHttpRequestHandler.hpp>
+#include <IHttpResponseHandler.hpp>
+#include <ICGI.hpp>
+#include <CGIRequest.hpp>
 
 class Webserver {
  private:
@@ -23,8 +22,8 @@ class Webserver {
     IHttpRequestHandler* httpRequestHandler;
     IHttpResponseHandler* httpResponseHandler;
     ICGI* cgi;
-    vector<int> serverSockets;
-    vector<struct sockaddr_in*> serverAddresses;
+    std::vector<int> serverSockets;
+    std::vector<struct sockaddr_in*> serverAddresses;
     bool allowResponse;
 
  public:
@@ -41,18 +40,18 @@ class Webserver {
     void setupAddress(void);
     void bindServerSocket(void);
     void startListening(void) const;
-    vector<int> getServerSockets(void) const;
-    string getResources(string& method, string& route) const;
-    string getErrorPage(int statusCode) const;
+    std::vector<int> getServerSockets(void) const;
+    std::string getResources(std::string& method, std::string& route) const;
+    std::string getErrorPage(int statusCode) const;
     void readRequest(int clientSocket);
     void parseRequest(void);
     bool isResponseAllowed(void) const;
     void setAllowResponse(bool isResponseAllowed);
-    const std::map<string, string>& getRequest(void) const;
+    const std::map<std::string, std::string>& getRequest(void) const;
     void send(int clientSocket);
 
  private:
-    string getContent(std::string path) const;
+    std::string getContent(std::string path) const;
     void uploadFile(const char* content, const char* fileName) const;
 };
 

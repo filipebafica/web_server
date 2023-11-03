@@ -8,8 +8,8 @@
 #include <iostream>
 #include <vector>
 
-#include "./CGIEnvironment.hpp"
-#include "./CGIResponse.hpp"
+#include <CGIEnvironment.hpp>
+#include <CGIResponse.hpp>
 
 int main(void) {
     int pipe_fd[2];
@@ -41,14 +41,15 @@ int main(void) {
         envp.setVariable("GATEWAY_INTERFACE", "CGI/1.1");
         envp.setVariable("REQUEST_SCHEME", "http");
         envp.setVariable("SERVER_PROTOCOL", "HTTP/1.1");
-        envp.setVariable("SCRIPT_FILENAME", "/home/vlima-nu/42/web_server/cgi/index.php"); /* Only works with this env variable set */
-        envp.setVariable("DOCUMENT_ROOT", "/home/vlima-nu/42/web_server");
-        envp.setVariable("PATH_INFO", "/cgi/index.php");
-        envp.setVariable("SCRIPT_NAME", "cgi/index.php");
-        envp.setVariable("REQUEST_URI", "/cgi/index.php");
+        /* Full path to the file (server_root + uri_path) */
+        envp.setVariable("SCRIPT_FILENAME", "/home/vlima-nu/42/web_server/testing/listDir.php");
+        // envp.setVariable("DOCUMENT_ROOT", "/home/vlima-nu/42/web_server");
+        envp.setVariable("PATH_INFO", "/testing/listDir.php");
+        // envp.setVariable("SCRIPT_NAME", "cgi/index.php");
+        envp.setVariable("REQUEST_URI", "./src");
         envp.setVariable("REQUEST_METHOD", "GET");
-        envp.setVariable("HTTP_ACCEPT", "text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.7");
-        envp.setVariable("HTTP_USER_AGENT", "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/118.0.0.0 Safari/537.36 Edg/118.0.2088.57");
+        // envp.setVariable("HTTP_ACCEPT", "text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.7");
+        // envp.setVariable("HTTP_USER_AGENT", "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/118.0.0.0 Safari/537.36 Edg/118.0.2088.57");
 
         execve("/usr/bin/php-cgi", args, envp.data());
         perror("execve");

@@ -1,4 +1,4 @@
-#include "./CGIResponse.hpp"
+#include <CGIResponse.hpp>
 
 /**
  * The constructor parses the CGI response string and extracts the status code,
@@ -8,36 +8,46 @@
  * entire response received from a CGI script or server.
  */
 CGIResponse::CGIResponse(const std::string& response) : _status(200) {
+    if (!response.length()) {
+        this->_status = 500;
+        return;
+    }
+
     size_t headerEnd = response.find("\r\n\r\n");
 
     if (headerEnd != std::string::npos) {
-        _headers    = response.substr(0, headerEnd);
-        _body       = response.substr(headerEnd + 4);
+        this->_headers  = response.substr(0, headerEnd);
+        this->_body     = response.substr(headerEnd + 4);
 
-        size_t statusPos = _headers.find("Status:");
+        size_t statusPos = this->_headers.find("Status:");
 
         if (statusPos != std::string::npos) {
-            _status = std::atoi(_headers.c_str() + statusPos + 7);
-            _headers.erase(
+            _status = std::atoi(this->_headers.c_str() + statusPos + 7);
+            this->_headers.erase(
                 statusPos,
-                _headers.find("\r\n", statusPos) + 2 - statusPos
+                this->_headers.find("\r\n", statusPos) + 2 - statusPos
             );
         }
     } else {
-        _body       = response;
+        this->_body       = response;
     }
 }
+
+CGIResponse::CGIResponse(int statusCode)
+    : _status(statusCode)
+    , _headers()
+    , _body() {}
 
 CGIResponse::~CGIResponse(void) {}
 
 int CGIResponse::getCGIStatus(void) const {
-    return _status;
+    return this->_status;
 }
 
 const char* CGIResponse::getCGIHeaders(void) const {
-    return _headers.c_str();
+    return this->_headers.c_str();
 }
 
 const char* CGIResponse::getCGIBody(void) const {
-    return _body.c_str();
+    return this->_body.c_str();
 }

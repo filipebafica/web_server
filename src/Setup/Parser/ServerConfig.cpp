@@ -1,10 +1,10 @@
-#include "ServerConfig.hpp"
+#include <ServerConfig.hpp>
 
 ServerConfig::ServerConfig() {
-    _errorPages[404] = "./static/404-Page.html";
-    _errorPages[405] = "./static/405-Page.html";
-    _errorPages[500] = "./static/500-Page.html";
-    _errorPages[502] = "./static/502-Page.html";
+    this->_errorPages[404] = "./static/404-Page.html";
+    this->_errorPages[405] = "./static/405-Page.html";
+    this->_errorPages[500] = "./static/500-Page.html";
+    this->_errorPages[502] = "./static/502-Page.html";
 }
 
 ServerConfig::~ServerConfig() {}
@@ -77,18 +77,18 @@ void ServerConfig::setLocationBlock(ServerLocation location)
 std::string ServerConfig::getResources(std::string method, std::string route)
 {
     std::string resource("");
-    int locationPosition = _selectLocationPosition(route);
-    if (!_isMethodAllowed(method, locationPosition))
+    int locationPosition = this->_selectLocationPosition(route);
+    if (!this->_isMethodAllowed(method, locationPosition))
     {
         throw MethodNotAllowedException();
     }
-    resource = _getResourcePathFile(locationPosition, route);
+    resource = this->_getResourcePathFile(locationPosition, route);
     return resource;
 }
 
 int ServerConfig::_selectLocationPosition(std::string route)
 {
-    std::vector<ServerLocation> locations = getLocations();
+    std::vector<ServerLocation> locations = this->getLocations();
     size_t maxLength = 0;
     int locationPosition = -1;
     
@@ -109,7 +109,7 @@ int ServerConfig::_selectLocationPosition(std::string route)
 
 bool ServerConfig::_isMethodAllowed(std::string method, int selectedLocation)
 {
-    std::vector<ServerLocation> locations = getLocations();
+    std::vector<ServerLocation> locations = this->getLocations();
     std::vector<std::string> allowedMethods = locations[selectedLocation].getAllowedMethods();
 
     if (allowedMethods.empty())
@@ -130,15 +130,15 @@ bool ServerConfig::_isMethodAllowed(std::string method, int selectedLocation)
 
 std::string ServerConfig::_getResourcePathFile(int locationPosition, std::string requestedRoute)
 {
-    std::vector<ServerLocation> locations = getLocations();
+    std::vector<ServerLocation> locations = this->getLocations();
     ServerLocation location = locations[locationPosition];
     std::string locationRoot = location.getRoot();
 
-    if (_isRequestedRouteDirectory(requestedRoute))
+    if (this->_isRequestedRouteDirectory(requestedRoute))
     {
-        return(_getResourcePathFromDirectory(locationPosition, locationRoot, requestedRoute));
+        return(this->_getResourcePathFromDirectory(locationPosition, locationRoot, requestedRoute));
     }
-    return(_getResourcePathFromFile(locationPosition, locationRoot, requestedRoute));
+    return(this->_getResourcePathFromFile(locationPosition, locationRoot, requestedRoute));
 }
 
 bool ServerConfig::_isRequestedRouteDirectory(std::string requestedRoute)
@@ -154,13 +154,13 @@ bool ServerConfig::_isRequestedRouteDirectory(std::string requestedRoute)
 
 std::string ServerConfig::_getResourcePathFromDirectory(int locationPosition, std::string locationRoot, std::string requestedRoute)
 {
-    std::vector<ServerLocation> locations = getLocations();
+    std::vector<ServerLocation> locations = this->getLocations();
     ServerLocation location = locations[locationPosition];
 
     std::string fullPath = locationRoot + requestedRoute;
     std::vector<std::string> fileNames = location.getIndexes();
 
-    std::string filePath = _getIndexFilePath(fullPath, fileNames);
+    std::string filePath = this->_getIndexFilePath(fullPath, fileNames);
     return filePath;
 }
 
@@ -170,7 +170,7 @@ std::string ServerConfig::_getIndexFilePath(std::string path, std::vector<std::s
     for (size_t i = 0; i < fileNames.size(); i++)
     {
         fileName = path + fileNames[i];
-        if (_fileExists(fileName))
+        if (this->_fileExists(fileName))
         {
             return fileName;
         }
@@ -191,11 +191,11 @@ bool ServerConfig::_fileExists(std::string& fileName)
 
 std::string ServerConfig::_getResourcePathFromFile(int locationPosition, std::string locationRoot, std::string requestedRoute)
 {
-    std::vector<ServerLocation> locations = getLocations();
+    std::vector<ServerLocation> locations = this->getLocations();
     ServerLocation location = locations[locationPosition];
 
     std::string fileName = locationRoot + requestedRoute;
-    if (!_fileExists(fileName))
+    if (!this->_fileExists(fileName))
     {
         throw RouteNotFoundException();
     }
@@ -216,9 +216,9 @@ std::string ServerConfig::_getFileFromRoute(std::string requestedRoute)
 std::string ServerConfig::getRoot(std::string method, std::string route)
 {
     std::string root("");
-    std::vector<ServerLocation> locations = getLocations();
-    int locationPosition = _selectLocationPosition(route);
-    if (!_isMethodAllowed(method, locationPosition))
+    std::vector<ServerLocation> locations = this->getLocations();
+    int locationPosition = this->_selectLocationPosition(route);
+    if (!this->_isMethodAllowed(method, locationPosition))
     {
         throw std::runtime_error("specified method not allowed");
     }
@@ -228,7 +228,7 @@ std::string ServerConfig::getRoot(std::string method, std::string route)
 
 std::string ServerConfig::getErrorPage(int statusCode)
 {
-    const std::map<int, std::string> errorPages = getErrorPages();
+    const std::map<int, std::string> errorPages = this->getErrorPages();
     struct stat buffer;
     if (errorPages.empty()) {
         if (stat(DEFAULT_ERROR_PAGE_PATH.c_str(), &buffer) == -1) {

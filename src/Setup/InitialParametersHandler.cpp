@@ -1,4 +1,4 @@
-#include "../Interfaces/IServerConfig.hpp"
+#include <IServerConfig.hpp>
 
 class InitialParametersHandler : public IServerConfig
 {

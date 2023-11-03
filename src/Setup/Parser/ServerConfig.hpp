@@ -9,8 +9,8 @@
 
 #include <sys/stat.h>
 
-#include "ServerLocation.hpp"
-#include "../../Interfaces/IServerConfig.hpp"
+#include <ServerLocation.hpp>
+#include <IServerConfig.hpp>
 
 class ServerConfig: public IServerConfig
 {

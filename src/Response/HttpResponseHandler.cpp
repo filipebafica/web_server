@@ -1,7 +1,8 @@
 #include <sstream>
 #include <iostream>
 #include <unistd.h>
-#include "../Interfaces/IHttpResponseHandler.hpp"
+
+#include <IHttpResponseHandler.hpp>
 
 class HttpResponseHandler : public IHttpResponseHandler {
 public:

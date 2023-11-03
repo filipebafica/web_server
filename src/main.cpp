@@ -1,28 +1,11 @@
 #include <vector>
-#include "./Signals.hpp"
-#include "./Monitor.hpp"
-#include "./CGI/CGI.hpp"
-#include "./Setup/Parser/Parser.hpp"
-#include "./Request/HttpRequestHandler.cpp"
-#include "./Response/HttpResponseHandler.cpp"
 
-
-
-//// FOR DEBUGGING PURPOSES
-//#include "Signals.cpp"
-//#include "Webserver.cpp"
-//#include "Monitor.cpp"
-//#include "CGI/CGI.cpp"
-//#include "CGI/CGIEnvironment.cpp" // undo comment
-//#include "CGI/CGIResponse.cpp" // undo comment
-//#include "Request/HttpRequestHandler.cpp"
-//#include "Response/HttpResponseHandler.cpp"
-//#include "Setup/Parser/CharacterReader.cpp"
-//#include "Setup/Parser/Lexer.cpp"
-//#include "Setup/Parser/Parser.cpp"
-//#include "Setup/Parser/ServerConfig.cpp"
-//#include "Setup/Parser/ServerLocation.cpp"
-
+#include <Signals.hpp>
+#include <Monitor.hpp>
+#include <CGI.hpp>
+#include <Parser.hpp>
+#include <HttpRequestHandler.hpp>
+#include <HttpResponseHandler.cpp>
 
 int main(int argc, const char* argv[]) {
     if (argc < 2) {

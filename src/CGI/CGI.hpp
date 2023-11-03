@@ -7,14 +7,15 @@
 #include <cstring>
 #include <iostream>
 
-#include "./CGIEnvironment.hpp"
-#include "../Interfaces/IHttpRequestHandler.hpp"
-#include "../Interfaces/ICGI.hpp"
+#include <CGIEnvironment.hpp>
+#include <CGIRequest.hpp>
+#include <ICGI.hpp>
+#include <IHttpRequestHandler.hpp>
 
 class CGI : public ICGI {
  public:
     CGI();
     ~CGI();
 
-    CGIResponse* execute(IHttpRequestHandler *httpRequestHandler) const;
+    CGIResponse* execute(const CGIRequest& request) const;
 };

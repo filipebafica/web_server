@@ -1,6 +1,6 @@
-#include "Monitor.hpp"
+#include <Monitor.hpp>
 
-Monitor::Monitor(vector<Webserver*>* webservers) {
+Monitor::Monitor(std::vector<Webserver*>* webservers) {
     // Injects dependencies
     this->webservers = webservers;
 
@@ -82,7 +82,7 @@ void Monitor::updatePollFdsVectorWithServerSockets(void) {
 
     for (size_t i = 0; i < this->webservers->size(); ++i) {
         Webserver* server = (*this->webservers)[i];
-        vector<int> serverSockets = server->getServerSockets();
+        std::vector<int> serverSockets = server->getServerSockets();
 
         for (size_t j = 0; j < serverSockets.size(); ++j) {
             struct pollfd serverPollFd;
@@ -92,7 +92,7 @@ void Monitor::updatePollFdsVectorWithServerSockets(void) {
 
             this->numberOfServers += 1;
             this->fdToWebserverMap.insert(
-                    pair<int, Webserver*>(serverSockets[j], server)
+                    std::pair<int, Webserver*>(serverSockets[j], server)
             );
         }
     }
@@ -108,7 +108,7 @@ void Monitor::updatePollFdsVectorWithClientSockets(void) {
     // Remove all the previous client sockets from the pollFds
     this->pollFds.erase(this->pollFds.begin() + this->numberOfServers, this->pollFds.end());
 
-    for (list<int>::iterator it = this->clientSockets.begin(); it != this->clientSockets.end(); ++it) {
+    for (std::list<int>::iterator it = this->clientSockets.begin(); it != this->clientSockets.end(); ++it) {
         struct pollfd clientPollFd;
         clientPollFd.fd = *it;
         clientPollFd.events = POLLIN | POLLOUT;
@@ -141,14 +141,14 @@ void Monitor::updateClientSocketsVector(int serverSocket) {
     );
 
     if (clientSocket < 0) {
-        cerr << "Error accepting connection" << endl;
+        std::cerr << "Error accepting connection" << std::endl;
         return;
     }
 
     // Add the new client socket to the list
     this->clientSockets.push_back(clientSocket);
     this->fdToWebserverMap.insert(
-            pair<int, Webserver*>(
+            std::pair<int, Webserver*>(
                     clientSocket,
                     this->findWebserver(serverSocket)
             )
