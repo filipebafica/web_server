@@ -3,9 +3,7 @@
 CGIEnvironment::CGIEnvironment(void) : _saveEnvPtr(NULL) {}
 
 CGIEnvironment::~CGIEnvironment() {
-    if (this->_saveEnvPtr) {
-        delete [] this->_saveEnvPtr;
-    }
+    delete [] this->_saveEnvPtr;
 }
 
 /**

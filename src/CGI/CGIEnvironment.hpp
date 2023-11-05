@@ -1,3 +1,6 @@
+#ifndef SRC_CGI_CGIENVIRONMENT_HPP_
+#define SRC_CGI_CGIENVIRONMENT_HPP_
+
 #include <vector>
 #include <string>
 #include <iostream>
@@ -14,3 +17,5 @@ class CGIEnvironment {
     std::vector<std::string>  _variables;
     char *const *             _saveEnvPtr;
 };
+
+#endif /* SRC_CGI_CGIENVIRONMENT_HPP_ */

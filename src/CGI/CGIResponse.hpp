@@ -1,3 +1,6 @@
+#ifndef SRC_CGI_CGIRESPONSE_HPP_
+#define SRC_CGI_CGIRESPONSE_HPP_
+
 #include <cstdlib>
 #include <string>
 #include <vector>
@@ -18,3 +21,5 @@ class CGIResponse {
     std::string               _body;
     std::vector<std::string>  _responseParts;
 };
+
+#endif /* SRC_CGI_CGIRESPONSE_HPP_ */

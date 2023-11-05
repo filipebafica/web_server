@@ -7,7 +7,7 @@
 
 class ICGI {
 public:
-    virtual CGIResponse* execute(const CGIRequest& request) const = 0;
+    virtual CGIResponse* execute(const CGIRequest& request) = 0;
     virtual ~ICGI() {};
 };
 
