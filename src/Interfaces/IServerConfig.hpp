@@ -1,14 +1,11 @@
 #ifndef I_SERVER_CONFIG_
 #define I_SERVER_CONFIG_
 
-#include <exception>
 #include <string>
 #include <vector>
-//#include "../Setup/Parser/Resources.hpp"
-#include <Resources.hpp>
 
-class MethodNotAllowedException: public std::exception {};
-class RouteNotFoundException: public std::exception {};
+#include <Exceptions.hpp>
+#include <Resources.hpp>
 
 class IServerConfig {
 public:
