@@ -1,6 +1,7 @@
 #ifndef PARSER_HPP_
 #define PARSER_HPP_
 
+#include <cstdlib>
 #include <string>
 #include <Lexer.hpp>
 #include <ServerConfig.hpp>

@@ -76,14 +76,13 @@ void ServerConfig::setLocationBlock(ServerLocation location)
 
 Resources ServerConfig::getResources(std::string method, std::string route)
 {
-    std::string resource("");
     int locationPosition = this->_selectLocationPosition(route);
     if (!this->_isMethodAllowed(method, locationPosition))
     {
         throw MethodNotAllowedException();
     }
-    resource = this->_getResourcePathFile(locationPosition, route);
-    return Resources(resource, false);
+ 
+    return this->_getResourcePathFile(locationPosition, route);
 }
 
 int ServerConfig::_selectLocationPosition(std::string route)
@@ -128,7 +127,7 @@ bool ServerConfig::_isMethodAllowed(std::string method, int selectedLocation)
     return false;
 }
 
-std::string ServerConfig::_getResourcePathFile(int locationPosition, std::string requestedRoute)
+Resources ServerConfig::_getResourcePathFile(int locationPosition, std::string requestedRoute)
 {
     std::vector<ServerLocation> locations = this->getLocations();
     ServerLocation location = locations[locationPosition];
@@ -152,7 +151,7 @@ bool ServerConfig::_isRequestedRouteDirectory(std::string requestedRoute)
 }
 
 
-std::string ServerConfig::_getResourcePathFromDirectory(int locationPosition, std::string locationRoot, std::string requestedRoute)
+Resources ServerConfig::_getResourcePathFromDirectory(int locationPosition, std::string locationRoot, std::string requestedRoute)
 {
     std::vector<ServerLocation> locations = this->getLocations();
     ServerLocation location = locations[locationPosition];
@@ -160,8 +159,17 @@ std::string ServerConfig::_getResourcePathFromDirectory(int locationPosition, st
     std::string fullPath = locationRoot + requestedRoute;
     std::vector<std::string> fileNames = location.getIndexes();
 
-    std::string filePath = this->_getIndexFilePath(fullPath, fileNames);
-    return filePath;
+    try {
+        std::string filePath = this->_getIndexFilePath(fullPath, fileNames);
+        Resources resources(filePath, false);
+        return resources;
+    } catch (RouteNotFoundException &exception) {
+        if (!this->_isAutoIndexOn(locationPosition)) {
+            throw RouteNotFoundException();
+        }
+    }
+    Resources resources(fullPath, true);
+    return resources;
 }
 
 std::string ServerConfig::_getIndexFilePath(std::string path, std::vector<std::string> fileNames)
@@ -175,7 +183,6 @@ std::string ServerConfig::_getIndexFilePath(std::string path, std::vector<std::s
             return fileName;
         }
     }
-    
     throw RouteNotFoundException();
 }
 
@@ -189,7 +196,7 @@ bool ServerConfig::_fileExists(std::string& fileName)
     return true;
 }
 
-std::string ServerConfig::_getResourcePathFromFile(int locationPosition, std::string locationRoot, std::string requestedRoute)
+Resources ServerConfig::_getResourcePathFromFile(int locationPosition, std::string locationRoot, std::string requestedRoute)
 {
     std::vector<ServerLocation> locations = this->getLocations();
     ServerLocation location = locations[locationPosition];
@@ -199,7 +206,8 @@ std::string ServerConfig::_getResourcePathFromFile(int locationPosition, std::st
     {
         throw RouteNotFoundException();
     }
-    return fileName;
+    Resources resources(fileName, false);
+    return resources;
 }
 
 std::string ServerConfig::_getFileFromRoute(std::string requestedRoute)
@@ -220,7 +228,7 @@ std::string ServerConfig::getRoot(std::string method, std::string route)
     int locationPosition = this->_selectLocationPosition(route);
     if (!this->_isMethodAllowed(method, locationPosition))
     {
-        throw std::runtime_error("specified method not allowed");
+        throw MethodNotAllowedException();
     }
     root = locations[locationPosition].getRoot();
     return root;
@@ -243,5 +251,17 @@ std::string ServerConfig::getErrorPage(int statusCode)
         return it->second;
     } else {
         throw std::runtime_error("there is no error page for specified error");
+    }
+}
+
+bool ServerConfig::_isAutoIndexOn(int locationPosition)
+{
+    std::vector<ServerLocation> locations = this->getLocations();
+    ServerLocation location = locations[locationPosition];
+
+    if (location.getAutoIndex() == "on") {
+        return true;
+    } else {
+        return false;
     }
 }

@@ -1,9 +1,5 @@
 #include <Lexer.hpp>
 
-/**
- * @todo It should be implemented tests
- * @todo Write all functions implementation detail
- */
 Lexer::Lexer(const char* filePath) : _reader(filePath), position(0)
 {
 

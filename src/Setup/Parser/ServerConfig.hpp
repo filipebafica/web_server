@@ -9,8 +9,9 @@
 
 #include <sys/stat.h>
 
-#include <ServerLocation.hpp>
 #include <IServerConfig.hpp>
+#include <ServerLocation.hpp>
+#include <Resources.hpp>
 
 class ServerConfig: public IServerConfig
 {
@@ -20,10 +21,10 @@ public:
     ServerConfig();
     ~ServerConfig();
 
-    Resources                 getResources(std::string method, std::string route);
-    std::string               getRoot(std::string method, std::string route);
-    std::string               getErrorPage(int statusCode);
-    std::vector<int>          getListeningPorts();
+    Resources           getResources(std::string method, std::string route);
+    std::string         getRoot(std::string method, std::string route);
+    std::string         getErrorPage(int statusCode);
+    std::vector<int>    getListeningPorts();
 
     const std::vector<std::string>  &getServerName() const;
     const std::string               &getHost() const;
@@ -46,10 +47,10 @@ private:
     std::string                     _clientMaxBodySize;
     std::vector<ServerLocation>     _locations;
 
-    std::string _getResourcePathFile(int locationPosition, std::string route);
-    std::string _getResourcePathFromDirectory(int locationPosition, std::string locationRoot, std::string requestedRoute);
+    Resources   _getResourcePathFile(int locationPosition, std::string route);
+    Resources   _getResourcePathFromDirectory(int locationPosition, std::string locationRoot, std::string requestedRoute);
     std::string _getIndexFilePath(std::string path, std::vector<std::string> fileNames);
-    std::string _getResourcePathFromFile(int locationPosition, std::string locationRoot, std::string requestedRoute);
+    Resources   _getResourcePathFromFile(int locationPosition, std::string locationRoot, std::string requestedRoute);
     std::string _getFileFromRoute(std::string requestedRoute);
 
     int _selectLocationPosition(std::string route);
@@ -57,6 +58,7 @@ private:
     bool _isRequestedRouteDirectory(std::string requestedRoute);
     bool _isMethodAllowed(std::string method, int selectedLocation);
     bool _fileExists(std::string& filename);
+    bool _isAutoIndexOn(int locationPosition);
 };
 
 #endif // SERVERCONFIG_HPP_

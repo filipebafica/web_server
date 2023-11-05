@@ -1,11 +1,3 @@
-// Implements the parser recognition
-
-/**
- * @todo: Será necessário revisar todas as validações criando testes
- * 
- */
-
-#include <cstdlib>
 #include <Parser.hpp>
 
 Parser::Parser(const char* filePath) : _lexer(filePath), _position(0)
