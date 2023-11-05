@@ -9,18 +9,22 @@
 #define EXPECTED_NUMBER_OF_TOKENS_IN_A_REQUEST_LINE 3
 
 void HttpRequestHandler::readRequest(int clientSocket) {
-    // Clear the buffer and read data from the client socket
-    std::memset(this->buffer, 0, sizeof(this->buffer));
     int bytesRead = read(clientSocket, this->buffer, sizeof(this->buffer));
 
     if (bytesRead < 0) {
         std::cerr << "Error reading request" << std::endl;
     } else if (bytesRead == 0) {
         std::cerr << "Client disconnected" << std::endl;
-    }
+    } else if (bytesRead == sizeof(this->buffer)) {
+        std::cerr << "Payload too large" << std::endl;
+        this->request["IsValidRequest"] = "No";
+    } else {
+        this->buffer[bytesRead] = 0;
+        this->request["IsValidRequest"] = "Yes";
 
-    std::cout << "********** REQUEST **********" << std::endl;
-    std::cout << this->buffer << std::endl;
+        std::cout << "********** REQUEST **********" << std::endl;
+        std::cout << this->buffer << std::endl;
+    }
 }
 
 void HttpRequestHandler::parseRequest(void) {
@@ -47,10 +51,6 @@ std::string HttpRequestHandler::getHeader(const std::string& key) const {
     }
     return this->request.find(key)->second;
 }
-
-//    const std::string& getBody() const {
-//        return this->body;
-//    }
 
 void HttpRequestHandler::parseRequestLine(void) {
     /* Parses the request line (e.g., "GET /path/to/resource HTTP/1.1") */
@@ -121,12 +121,20 @@ void HttpRequestHandler::parseRequestBody(void) {
         return;
     }
 
+    std::string body;
+    size_t i = 1;
+
+    do {
+        body.append(tokens[i]);
+        body.append(HEADER_AND_BODY_DELIMITER);
+    } while (++i < tokens.size());
+
     if (this->getHeader("Transfer-Encoding") == std::string("chunked")) {
-        this->setChunkedRequest(tokens[1]);
+        this->setChunkedRequest(body);
         return;
     }
 
-    this->request["Body"] = tokens[1];
+    this->request["Body"] = body;
 }
 
 void HttpRequestHandler::setChunkedRequest(std::string chunkedBody) {
