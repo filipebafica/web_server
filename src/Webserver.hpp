@@ -10,6 +10,7 @@
 #include <dirent.h>
 #include <netinet/in.h>
 #include <sys/socket.h>
+#include <unistd.h>
 
 #include <IServerConfig.hpp>
 #include <IHttpRequestHandler.hpp>
@@ -17,24 +18,18 @@
 #include <ICGI.hpp>
 #include <CGIRequest.hpp>
 
-//#include "./Interfaces/IServerConfig.hpp"
-//#include "./Interfaces/IHttpRequestHandler.hpp"
-//#include "./Interfaces/IHttpResponseHandler.hpp"
-//#include "./Interfaces/ICGI.hpp"
-//#include "./CGI/CGIRequest.hpp"
-//#include "./CGI/CGIResponse.hpp"
-
 class Webserver {
  private:
-    IServerConfig* serverConfig;
-    IHttpRequestHandler* httpRequestHandler;
-    IHttpResponseHandler* httpResponseHandler;
-    ICGI* cgi;
     std::vector<int> serverSockets;
     std::vector<struct sockaddr_in*> serverAddresses;
     bool allowResponse;
 
  public:
+    IServerConfig* serverConfig;
+    IHttpRequestHandler* httpRequestHandler;
+    IHttpResponseHandler* httpResponseHandler;
+    ICGI* cgi;
+
     Webserver(
             IServerConfig* serverConfig,
             IHttpRequestHandler* httpRequestHandler,
@@ -57,7 +52,7 @@ class Webserver {
     void setAllowResponse(bool isResponseAllowed);
     const std::map<std::string, std::string>& getRequest(void) const;
     void send(int clientSocket);
-    void handleGET(int clientSocket, std::string& method, std::string& route, std::string& contentType) const;
+    void handleGET(int clientSocket, std::string& method, std::string& route, std::string& contentType, const Resources& resources) const;
     void handlePOST(int clientSocket, std::string& method, std::string& route, std::string& contentType) const;
     void handleDELETE(int clientSocket);
 

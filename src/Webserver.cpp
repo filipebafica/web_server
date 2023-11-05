@@ -23,12 +23,12 @@ Webserver::Webserver(
 }
 
 Webserver::~Webserver() {
-    delete this->httpRequestHandler;
-    delete this->httpResponseHandler;
-    delete this->cgi;
-
     for (size_t i = 0; i < this->serverAddresses.size(); i++) {
         delete this->serverAddresses[i];
+    }
+    /* Closing socket descriptors */
+    for (size_t i = 0; i < this->serverSockets.size(); i++) {
+        close(this->serverSockets[i]);
     }
 }
 
@@ -52,11 +52,16 @@ void Webserver::createSocket(void) {
             - SOCK_STREAM corresponds to a stream-oriented socket (guarantee the order).
     */
     std::vector<int> ports = this->serverConfig->getListeningPorts();
+    int option = 1;
 
     for (size_t i = 0; i < ports.size(); ++i) {
         int socketDescriptor = socket(AF_INET, SOCK_STREAM, 0);
+
+        /** SO_REUSEADDR socket option avoids 'address already in use'
+         * error when binding the socket to the server address. */
+        setsockopt(socketDescriptor, SOL_SOCKET, SO_REUSEADDR, &option, sizeof(option));
         if (socketDescriptor < 0) {
-            std::cerr << "Error creating socket" << std::endl;
+            std::cerr << "Error creating socket: " << strerror(errno) << std::endl;
             exit(1);
         }
         this->serverSockets.push_back(socketDescriptor);
@@ -111,7 +116,7 @@ void Webserver::bindServerSocket(void) {
         );
 
         if (bindToSocket < 0) {
-            std::cerr << "Error binding socket" << std::endl;
+            std::cerr << "Error binding socket: " << strerror(errno) << std::endl;
             exit(1);
         }
     }
@@ -163,9 +168,10 @@ void Webserver::send(int clientSocket) {
         std::string method = this->httpRequestHandler->getHeader("Method");
         std::string route = this->httpRequestHandler->getHeader("Route");
         std::string contentType = this->httpRequestHandler->getHeader("Content-Type");
+        Resources resources = this->serverConfig->getResources(method, route);
 
         if (std::string("GET") == method) {
-            this->handleGET(clientSocket, method, route, contentType);
+            this->handleGET(clientSocket, method, route, contentType, resources);
 
             return;
         }
@@ -180,20 +186,14 @@ void Webserver::send(int clientSocket) {
             this->handleDELETE(clientSocket);
         }
 
-    } catch (MethodNotAllowedException& exception) {
-        this->httpResponseHandler->send(
-                clientSocket,
-                405,
-                "",
-                this->getContent(this->getErrorPage(405)).c_str()
-        );
+    } catch (ServerResponseException& serverException) {
+        int statusCode = serverException.getStatus();
 
-    } catch (RouteNotFoundException& exception) {
         this->httpResponseHandler->send(
-                clientSocket,
-                404,
-                "",
-                this->getContent(this->getErrorPage(404)).c_str()
+            clientSocket,
+            statusCode,
+            "",
+            this->getContent(this->getErrorPage(statusCode)).c_str()
         );
 
     } catch (std::exception& exception) {
@@ -210,10 +210,9 @@ void Webserver::handleGET(
         int clientSocket,
         std::string& method,
         std::string& route,
-        std::string& contentType
+        std::string& contentType,
+        const Resources& resources
     ) const {
-    Resources resources = this->serverConfig->getResources(method, route);
-
     if (resources.isDirectory) {
         this->httpResponseHandler->send(
                 clientSocket,
@@ -225,11 +224,11 @@ void Webserver::handleGET(
         return;
     }
 
-    if (this->httpRequestHandler->getHeader("isPHP") == std::string("YES")) {
+    if (this->httpRequestHandler->getHeader("isPHP") == std::string("Yes")) {
         CGIRequest cgiReq = CGIRequest(
                 method,
                 this->httpRequestHandler->getHeader("Accept"),
-                this->httpRequestHandler->getHeader("Agent"),
+                this->httpRequestHandler->getHeader("User-Agent"),
                 this->serverConfig->getRoot(method, route),
                 this->httpRequestHandler->getHeader("DecodedURI"),
                 this->httpRequestHandler->getHeader("QueryString"),
@@ -246,14 +245,15 @@ void Webserver::handleGET(
                 cgiResponse->getCGIHeaders(),
                 cgiResponse->getCGIBody()
         );
+        delete cgiResponse;
+    } else {
+        this->httpResponseHandler->send(
+                clientSocket,
+                200,
+                "",
+                this->getContent(resources.path).c_str()
+        );
     }
-
-    this->httpResponseHandler->send(
-            clientSocket,
-            200,
-            "",
-            this->getContent(resources.path).c_str()
-    );
 }
 
 void Webserver::handlePOST(
@@ -270,12 +270,13 @@ void Webserver::handlePOST(
                 "",
                 "success"
         );
+        return;
     }
 
     CGIRequest cgiReq = CGIRequest(
             method,
             this->httpRequestHandler->getHeader("Accept"),
-            this->httpRequestHandler->getHeader("Agent"),
+            this->httpRequestHandler->getHeader("User-Agent"),
             this->serverConfig->getRoot(method, route),
             this->httpRequestHandler->getHeader("DecodedURI"),
             this->httpRequestHandler->getHeader("QueryString"),
@@ -292,6 +293,7 @@ void Webserver::handlePOST(
             cgiResponse->getCGIHeaders(),
             "file was uploaded successfully"
     );
+    delete cgiResponse;
 }
 
 void Webserver::handleDELETE(int clientSocket) {
