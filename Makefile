@@ -1,8 +1,9 @@
 NAME = webserv
 INCLUDES =  -I./src 				\
-			-I./src/Interfaces 		\
 			-I./src/CGI 			\
-			-I./src/Setup/Parser 	\
+			-I./src/Exceptions		\
+			-I./src/Interfaces 		\
+			-I./src/Parser 			\
 			-I./src/Request 		\
 			-I./src/Response 		\
 
@@ -10,6 +11,7 @@ SOURCE = 	main.cpp \
 			Monitor.cpp \
 			Webserver.cpp \
 			HttpRequestHandler.cpp \
+			HttpResponseHandler.cpp \
 			CharacterReader.cpp \
 			Lexer.cpp \
 			Parser.cpp \
@@ -19,13 +21,21 @@ SOURCE = 	main.cpp \
 			CGIEnvironment.cpp \
 			CGIResponse.cpp \
 			CGIRequest.cpp \
+			Exceptions.cpp \
 			Signals.cpp \
+
+VPATH =		./src/				\
+			./src/CGI			\
+			./src/Exceptions	\
+			./src/Parser		\
+			./src/Request		\
+			./src/Response		\
+			./src/Setup			\
 
 OBJECTS_DIR = ./objects/
 OBJECTS = $(SOURCE:%.cpp=$(OBJECTS_DIR)%.o)
 CC = c++
 FLAGS = -g -Wall -Wextra -Werror -std=c++98
-VPATH = ./src/ ./src/CGI ./src/Request ./src/Response ./src/Setup ./src/Setup/Parser
 
 PHP_CGI_PATH := $(shell which php-cgi)
 FLAGS += -D CGI_PATH=\"$(PHP_CGI_PATH)\"
