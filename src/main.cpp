@@ -5,7 +5,7 @@
 #include <CGI.hpp>
 #include <Parser.hpp>
 #include <HttpRequestHandler.hpp>
-#include <HttpResponseHandler.cpp>
+#include <HttpResponseHandler.hpp>
 
 int main(int argc, const char* argv[]) {
     if (argc < 2) {
@@ -35,5 +35,11 @@ int main(int argc, const char* argv[]) {
 
     monitor.loop();
 
+    for (size_t i = 0; i < webservers.size(); i++) {
+        delete webservers[i]->httpRequestHandler;
+        delete webservers[i]->httpResponseHandler;
+        delete webservers[i]->cgi;
+        delete webservers[i];
+    }
     return 0;
 }

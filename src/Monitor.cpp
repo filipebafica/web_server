@@ -9,12 +9,7 @@ Monitor::Monitor(std::vector<Webserver*>* webservers) {
     this->monitorRunning = true;
 };
 
-Monitor::~Monitor() {
-    for (size_t i = 0; i < this->webservers->size(); i++) {
-        delete (*this->webservers)[i];
-    }
-    this->webservers->clear();
-}
+Monitor::~Monitor() {}
 
 void Monitor::loop(void) {
     this->updatePollFdsVectorWithServerSockets();
@@ -22,7 +17,7 @@ void Monitor::loop(void) {
         this->updatePollFdsVectorWithClientSockets();
 
         if (this->pollEvents() == -1) {
-            perror("Error in poll");
+            std::cerr << "Error in poll" << strerror(errno) << std::endl;
             continue;
         }
 
