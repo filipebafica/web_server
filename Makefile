@@ -17,6 +17,7 @@ SOURCE = 	main.cpp \
 			Parser.cpp \
 			ServerLocation.cpp \
 			ServerConfig.cpp \
+			Resources.cpp \
 			CGI.cpp \
 			CGIEnvironment.cpp \
 			CGIResponse.cpp \

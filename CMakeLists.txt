@@ -31,6 +31,7 @@ set(SOURCE_FILES
         src/Parser/CharacterReader.cpp
         src/Parser/Lexer.cpp
         src/Parser/Parser.cpp
+        src/Parser/Resources.cpp
         src/Parser/ServerConfig.cpp
         src/Parser/ServerLocation.cpp
         src/Signals.cpp
