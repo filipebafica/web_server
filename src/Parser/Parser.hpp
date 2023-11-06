@@ -20,36 +20,37 @@ private:
     size_t                      _position;
     std::set<int>               _occupiedPorts;
 
-    void initServerConfig();
-    void initLocationBlock();
+    void _initServerConfig();
+    void _initLocationBlock();
 
-    bool isValidPort(std::string &port);
-    bool isValidServerName(std::string &serverName);
-    bool isValidPath(std::string &rootPath);
-    bool isValidErrorPageDirective(Token token);
-    bool isValidErrorCode(int code);
-    bool isValidAddress(std::string address);
-    bool isValidHttpMethod(std::string method);
+    bool _isValidPort(std::string &port);
+    bool _isValidServerName(std::string &serverName);
+    bool _isValidPath(std::string &rootPath);
+    bool _isValidErrorPageDirective(Token token);
+    bool _isValidErrorCode(int code);
+    bool _isValidAddress(std::string address);
+    bool _isValidHttpMethod(std::string method);
+    bool _isConvertibleToInt(const std::string& str);
 
-    void parseServerConfig();
-    void parseServerBlock();
-    void parseListenDirective();
-    void parseToken(std::string keyword);
-    void parseServerNameDirective();
-    void parseLocationDirective();
-    void parseLocationBlock();
-    void parseRootDirective();
-    void parseIndexDirective();
-    void parseErrorPageDirective();
-    void parseClientMaxBodySizeDirective();
-    void parseAutoIndexDirective();
-    void parseProxyPassDirective();
-    void parseAliasDirective();
-    void parseTryFilesDirective();
-    void parseReturnDirective();
-    void parseAllowDirective();
-    void parseDenyDirective();
-    void parseAllowedMethods();
+    void _parseServerConfig();
+    void _parseServerBlock();
+    void _parseListenDirective();
+    void _parseToken(std::string keyword);
+    void _parseServerNameDirective();
+    void _parseLocationDirective();
+    void _parseLocationBlock();
+    void _parseRootDirective();
+    void _parseIndexDirective();
+    void _parseErrorPageDirective();
+    void _parseClientMaxBodySizeDirective();
+    void _parseAutoIndexDirective();
+    void _parseProxyPassDirective();
+    void _parseAliasDirective();
+    void _parseTryFilesDirective();
+    void _parseReturnDirective();
+    void _parseAllowDirective();
+    void _parseDenyDirective();
+    void _parseAllowedMethods();
 };
 
 #endif // PARSER_HPP_

@@ -5,6 +5,9 @@ ServerConfig::ServerConfig() {
     this->_errorPages[405] = "./static/405-Page.html";
     this->_errorPages[500] = "./static/500-Page.html";
     this->_errorPages[502] = "./static/502-Page.html";
+
+    this->_host = "";
+    this->_clientMaxBodySize = 0;
 }
 
 ServerConfig::~ServerConfig() {}
@@ -29,7 +32,7 @@ const std::map<int,std::string> ServerConfig::getErrorPages() const
     return this->_errorPages;
 }
 
-const std::string &ServerConfig::getClientMaxBodySize() const
+int ServerConfig::getClientMaxBodySize()
 {
     return this->_clientMaxBodySize;
 }
@@ -63,7 +66,7 @@ ServerConfig &ServerConfig::setErrorPages(int code, std::string page)
     return *this;
 }
 
-ServerConfig &ServerConfig::setClientMaxBodySize(std::string clientMaxBodySize)
+ServerConfig &ServerConfig::setClientMaxBodySize(int clientMaxBodySize)
 {
     this->_clientMaxBodySize = clientMaxBodySize;
     return *this;
