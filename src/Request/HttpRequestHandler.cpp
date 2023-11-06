@@ -8,37 +8,35 @@
 #define REQUEST_HEADER_PAIR_SIZE 2
 #define EXPECTED_NUMBER_OF_TOKENS_IN_A_REQUEST_LINE 3
 
-void HttpRequestHandler::readRequest(int clientSocket) {
-    int bytesRead = read(clientSocket, this->buffer, sizeof(this->buffer));
+void HttpRequestHandler::readRequest(int clientSocket, char** buffer, int bufferSize) {
+    std::memset(*buffer, 0, bufferSize);
+    int bytesRead = read(clientSocket, *buffer, bufferSize);
 
     if (bytesRead < 0) {
         std::cerr << "Error reading request" << std::endl;
     } else if (bytesRead == 0) {
         std::cerr << "Client disconnected" << std::endl;
-    } else if (bytesRead == sizeof(this->buffer)) {
-        std::cerr << "Payload too large" << std::endl;
-        this->request["IsValidRequest"] = "No";
     } else {
-        this->buffer[bytesRead] = 0;
-        this->request["IsValidRequest"] = "Yes";
-
         std::cout << "********** REQUEST **********" << std::endl;
-        std::cout << this->buffer << std::endl;
+        std::cout << *buffer << std::endl;
     }
 }
 
-void HttpRequestHandler::parseRequest(void) {
+void HttpRequestHandler::parseRequest(char* buffer, int defaultBufferHeaderSize, int clientMaxBodySize) {
+    // Validates Request size
+    this->validateRequest(buffer, defaultBufferHeaderSize, clientMaxBodySize);
+
     // Parses Request-Line (first line)
-    this->parseRequestLine();
+    this->parseRequestLine(buffer);
 
     // Parses Request-Header
-    this->parseRequestHeader();
+    this->parseRequestHeader(buffer);
 
     // Decodes URI, get 
     this->parseURI();
 
     // Parses the Request-Body
-    this->parseRequestBody();
+    this->parseRequestBody(buffer);
 }
 
 const std::map<std::string, std::string>& HttpRequestHandler::getRequest() const {
@@ -52,13 +50,43 @@ std::string HttpRequestHandler::getHeader(const std::string& key) const {
     return this->request.find(key)->second;
 }
 
-void HttpRequestHandler::parseRequestLine(void) {
+void HttpRequestHandler::validateRequest(char *buffer, int defaultBufferHeaderSize, int clientMaxBodySize) {
+    // Splits the request blocks (header and body)
+    std::vector<std::string> blocks = this->tokenize(buffer, HEADER_AND_BODY_DELIMITER);
+
+    if (blocks.empty()) {
+        return;
+    }
+
+    if ((int)blocks.size() >= defaultBufferHeaderSize) {
+        std::cerr << "Header too large" << std::endl;
+        throw BadRequestException();
+    }
+
+    // Validates if there is a body
+    if (blocks.size() < 2) {
+        return;
+    }
+
+    std::string body;
+    size_t i = 1;
+
+    do {
+        body.append(blocks[i]);
+    } while (++i < blocks.size());
+
+    if ((int)body.size() > clientMaxBodySize) {
+        std::cerr << "Body too large" << std::endl;
+        throw PayloadTooLargeException();
+    }
+}
+
+void HttpRequestHandler::parseRequestLine(char* buffer) {
     /* Parses the request line (e.g., "GET /path/to/resource HTTP/1.1") */
 
     // Splits the request into lines
     std::vector<std::string> lines = this->tokenize(
-            this->buffer,
-
+            buffer,
             END_OF_LINE_DELIMITER
     );
 
@@ -78,7 +106,7 @@ void HttpRequestHandler::parseRequestLine(void) {
     this->request["Version"] = tokens[2];
 }
 
-void HttpRequestHandler::parseRequestHeader(void) {
+void HttpRequestHandler::parseRequestHeader(char* buffer) {
     /* Parses the request headers (e.g., "
         Host: www.example.com
         Content-Type: application/octet-stream
@@ -87,7 +115,7 @@ void HttpRequestHandler::parseRequestHeader(void) {
 
 
     // Splits the request blocks (header and body)
-    std::vector<std::string> blocks = this->tokenize(this->buffer, HEADER_AND_BODY_DELIMITER);
+    std::vector<std::string> blocks = this->tokenize(buffer, HEADER_AND_BODY_DELIMITER);
 
     if (blocks.empty()) {
         return;
@@ -110,11 +138,11 @@ void HttpRequestHandler::parseRequestHeader(void) {
     }
 }
 
-void HttpRequestHandler::parseRequestBody(void) {
+void HttpRequestHandler::parseRequestBody(char* buffer) {
     /* Parses and stores the message-body */
 
     // Splits the request blocks (header and body)
-    std::vector<std::string> tokens = this->tokenize(this->buffer, HEADER_AND_BODY_DELIMITER);
+    std::vector<std::string> tokens = this->tokenize(buffer, HEADER_AND_BODY_DELIMITER);
 
     // Validates if there is a body
     if (tokens.empty() || tokens.size() < 2) {
@@ -135,6 +163,9 @@ void HttpRequestHandler::parseRequestBody(void) {
     }
 
     this->request["Body"] = body;
+
+    std::cout << "********** BODY **********" << std::endl;
+    std::cout <<  this->request["Body"] << std::endl;
 }
 
 void HttpRequestHandler::setChunkedRequest(std::string chunkedBody) {

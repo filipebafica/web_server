@@ -35,20 +35,34 @@ void Monitor::loop(void) {
             int clientSocket = this->pollFds[i].fd;
             Webserver* webserver = this->findWebserver(clientSocket);
 
-            // Handles request side
-            if (this->pollFds[i].revents & POLLIN) {
-                webserver->readRequest(clientSocket);
-                webserver->parseRequest();
-                webserver->setAllowResponse(true);
-            }
+            try {
+                // Handles request side
+                if (this->pollFds[i].revents & POLLIN) {
+                    webserver->readRequest(clientSocket);
+                    webserver->parseRequest();
+                    webserver->setAllowResponse(true);
+                }
 
-            // Handles response side
-            if ((this->pollFds[i].revents & POLLOUT) && webserver->isResponseAllowed()) {
-                webserver->send(clientSocket);
-                webserver->setAllowResponse(false);
-                this->clientSockets.remove(clientSocket);
-                this->fdToWebserverMap.erase(clientSocket);
-                close(clientSocket);
+                // Handles response side
+                if ((this->pollFds[i].revents & POLLOUT) && webserver->isResponseAllowed()) {
+                    webserver->send(clientSocket);
+                    webserver->setAllowResponse(false);
+                    this->clean(clientSocket);
+                }
+            } catch (ServerResponseException& serverException) {
+                webserver->responseWriter(
+                        clientSocket,
+                        serverException.getStatus()
+                );
+                this->clean(clientSocket);
+            } catch (std::exception& exception) {
+                webserver->responseWriter(
+                        clientSocket,
+                        500,
+                        "",
+                        "Internal Server Error"
+                );
+                this->clean(clientSocket);
             }
         }
     }
@@ -152,4 +166,10 @@ void Monitor::updateClientSocketsVector(int serverSocket) {
 
 Webserver* Monitor::findWebserver(int fileDescriptor) const {
     return this->fdToWebserverMap.find(fileDescriptor)->second;
+}
+
+void Monitor::clean(int clientSocket) {
+    this->clientSockets.remove(clientSocket);
+    this->fdToWebserverMap.erase(clientSocket);
+    close(clientSocket);
 }

@@ -15,3 +15,6 @@ MethodNotAllowedException::MethodNotAllowedException(int status)
 
 RouteNotFoundException::RouteNotFoundException(int status)
     : ServerResponseException(status) {}
+
+BadRequestException::BadRequestException(int status)
+    : ServerResponseException(status){}

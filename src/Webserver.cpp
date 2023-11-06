@@ -6,20 +6,24 @@ Webserver::Webserver(
         IHttpResponseHandler* httpResponseHandler,
         ICGI* cgi
 ) {
-    // Inject dependencies
+    // Injects dependencies
     this->serverConfig = serverConfig;
     this->httpRequestHandler = httpRequestHandler;
     this->httpResponseHandler = httpResponseHandler;
     this->cgi = cgi;
+
+    // Initializes attributes
+    this->allowResponse = false;
+    this->defaultBufferHeaderSize = 1024;
 
     // Setups server
     this->setupAddress();
     this->createSocket();
     this->bindServerSocket();
     this->startListening();
-
-    // Initialize attributes
-    this->allowResponse = false;
+    this->setClientMaxBodySize();
+    this->setBufferSize();
+    this->setBuffer();
 }
 
 Webserver::~Webserver() {
@@ -30,6 +34,8 @@ Webserver::~Webserver() {
     for (size_t i = 0; i < this->serverSockets.size(); i++) {
         close(this->serverSockets[i]);
     }
+
+    delete this->buffer;
 }
 
 void Webserver::createSocket(void) {
@@ -131,6 +137,18 @@ void Webserver::startListening(void) const {
     }
 }
 
+void Webserver::setClientMaxBodySize(void) {
+    this->clientMaxBodySize = this->serverConfig->getClientMaxBodySize();
+}
+
+void Webserver::setBufferSize(void) {
+    this->bufferSize = this->defaultBufferHeaderSize + this->clientMaxBodySize;
+}
+
+void Webserver::setBuffer(void) {
+    this->buffer = new char[this->bufferSize];
+}
+
 std::vector<int> Webserver::getServerSockets(void) const {
     return this->serverSockets;
 }
@@ -144,11 +162,15 @@ std::string Webserver::getErrorPage(int statusCode) const {
 }
 
 void Webserver::readRequest(int clientSocket) {
-    this->httpRequestHandler->readRequest(clientSocket);
+    this->httpRequestHandler->readRequest(
+            clientSocket,
+            &this->buffer,
+            this->bufferSize
+    );
 }
 
 void Webserver::parseRequest(void) {
-    this->httpRequestHandler->parseRequest();
+    this->httpRequestHandler->parseRequest(this->buffer, this->defaultBufferHeaderSize, this->clientMaxBodySize);
 }
 
 bool Webserver::isResponseAllowed(void) const {
@@ -163,46 +185,30 @@ const std::map<std::string, std::string>& Webserver::getRequest() const {
     return this->httpRequestHandler->getRequest();
 }
 
+void Webserver::responseWriter(int socket, int statusCode, const char *headers, const char *content) {
+    this->httpResponseHandler->send(socket, statusCode, headers, content);
+}
+
 void Webserver::send(int clientSocket) {
-    try {
-        std::string method = this->httpRequestHandler->getHeader("Method");
-        std::string route = this->httpRequestHandler->getHeader("Route");
-        std::string contentType = this->httpRequestHandler->getHeader("Content-Type");
-        Resources resources = this->serverConfig->getResources(method, route);
+    std::string method = this->httpRequestHandler->getHeader("Method");
+    std::string route = this->httpRequestHandler->getHeader("Route");
+    std::string contentType = this->httpRequestHandler->getHeader("Content-Type");
+    Resources resources = this->serverConfig->getResources(method, route);
 
-        if (std::string("GET") == method) {
-            this->handleGET(clientSocket, method, route, contentType, resources);
+    if (std::string("GET") == method) {
+        this->handleGET(clientSocket, method, route, contentType, resources);
 
-            return;
-        }
+        return;
+    }
 
-        if (std::string("POST") == method) {
-            this->handlePOST(clientSocket, method, route, contentType);
+    if (std::string("POST") == method) {
+        this->handlePOST(clientSocket, method, route, contentType);
 
-            return;
-        }
+        return;
+    }
 
-        if (std::string("DELETE") == method) {
-            this->handleDELETE(clientSocket);
-        }
-
-    } catch (ServerResponseException& serverException) {
-        int statusCode = serverException.getStatus();
-
-        this->httpResponseHandler->send(
-            clientSocket,
-            statusCode,
-            "",
-            this->getContent(this->getErrorPage(statusCode)).c_str()
-        );
-
-    } catch (std::exception& exception) {
-        this->httpResponseHandler->send(
-                clientSocket,
-                500,
-                "",
-                "Internal Server Error"
-        );
+    if (std::string("DELETE") == method) {
+        this->handleDELETE(clientSocket);
     }
 }
 
