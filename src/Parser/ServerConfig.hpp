@@ -25,10 +25,10 @@ public:
     std::string         getRoot(std::string method, std::string route);
     std::string         getErrorPage(int statusCode);
     std::vector<int>    getListeningPorts();
+    int                 getClientMaxBodySize();
 
     const std::vector<std::string>  &getServerName() const;
     const std::string               &getHost() const;
-    const std::string               &getClientMaxBodySize() const;
     std::vector<ServerLocation>     &getLocations();
     const std::map<int,std::string> getErrorPages() const;
 
@@ -36,7 +36,7 @@ public:
     ServerConfig                    &setServerName(std::string serverName);
     ServerConfig                    &setHost(std::string host);
     ServerConfig                    &setErrorPages(int code, std::string page);
-    ServerConfig                    &setClientMaxBodySize(std::string clientMaxBodySize);
+    ServerConfig                    &setClientMaxBodySize(int clientMaxBodySize);
     void                            setLocationBlock(ServerLocation location);
 
 private:
@@ -44,7 +44,7 @@ private:
     std::vector<std::string>        _serverName;
     std::string                     _host;
     std::map<int, std::string>      _errorPages;
-    std::string                     _clientMaxBodySize;
+    int                             _clientMaxBodySize;
     std::vector<ServerLocation>     _locations;
 
     Resources   _getResourcePathFile(int locationPosition, std::string route);
