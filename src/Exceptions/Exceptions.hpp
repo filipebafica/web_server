@@ -29,4 +29,9 @@ class RouteNotFoundException: public ServerResponseException {
     explicit RouteNotFoundException(int status = 404);
 };
 
+class BadRequestException: public ServerResponseException {
+ public:
+    explicit BadRequestException(int status = 400);
+};
+
 #endif /* SRC_EXCEPTIONS_EXCEPTIONS_HPP_ */

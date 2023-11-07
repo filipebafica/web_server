@@ -11,22 +11,23 @@
 #include <cstdio>
 
 #include <IHttpRequestHandler.hpp>
+#include <Exceptions.hpp>
 
 class HttpRequestHandler : public IHttpRequestHandler {
 public:
-    void readRequest(int clientSocket);
-    void parseRequest(void);
+    void readRequest(int clientSocket, char** buffer, int bufferSize);
+    void parseRequest(char* buffer, int defaultBufferHeaderSize, int clientMaxBodySize);
     const std::map<std::string, std::string>& getRequest() const;
     std::string getHeader(const std::string& key) const;
     void parseURI(void);
 
 private:
-    char buffer[1024];
     std::map<std::string, std::string> request;
 
-    void parseRequestLine(void);
-    void parseRequestHeader(void);
-    void parseRequestBody(void);
+    void validateRequest(char* buffer, int defaultBufferHeaderSize, int clientMaxBodySize);
+    void parseRequestLine(char* buffer);
+    void parseRequestHeader(char* buffer);
+    void parseRequestBody(char* buffer);
     void setChunkedRequest(std::string chunkedBody);
     std::vector<std::string> tokenize(const char* s, const char* delim);
 

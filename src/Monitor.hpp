@@ -34,6 +34,7 @@ class Monitor {
     bool    serverSocketHasEvents(struct pollfd& fd);
     void    updateClientSocketsVector(int serverSocket);
     Webserver* findWebserver(int fileDescriptor) const;
+    void    clean(int clientSocket);
 };
 
 #endif /* MONITOR_HPP_ */

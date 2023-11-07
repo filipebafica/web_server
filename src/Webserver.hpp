@@ -17,12 +17,17 @@
 #include <IHttpResponseHandler.hpp>
 #include <ICGI.hpp>
 #include <CGIRequest.hpp>
+#include <Exceptions.hpp>
 
 class Webserver {
  private:
     std::vector<int> serverSockets;
     std::vector<struct sockaddr_in*> serverAddresses;
     bool allowResponse;
+    int defaultBufferHeaderSize;
+    int clientMaxBodySize;
+    int bufferSize;
+    char* buffer;
 
  public:
     IServerConfig* serverConfig;
@@ -43,6 +48,9 @@ class Webserver {
     void setupAddress(void);
     void bindServerSocket(void);
     void startListening(void) const;
+    void setClientMaxBodySize(void);
+    void setBufferSize(void);
+    void setBuffer(void);
     std::vector<int> getServerSockets(void) const;
     Resources getResources(std::string& method, std::string& route) const;
     std::string getErrorPage(int statusCode) const;
@@ -51,6 +59,7 @@ class Webserver {
     bool isResponseAllowed(void) const;
     void setAllowResponse(bool isResponseAllowed);
     const std::map<std::string, std::string>& getRequest(void) const;
+    void responseWriter(int socket, int statusCode, const char* headers = "", const char* content = "");
     void send(int clientSocket);
     void handleGET(int clientSocket, std::string& method, std::string& route, std::string& contentType, const Resources& resources) const;
     void handlePOST(int clientSocket, std::string& method, std::string& route, std::string& contentType) const;
