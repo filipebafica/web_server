@@ -1,8 +1,10 @@
 #include <ServerConfig.hpp>
 
 ServerConfig::ServerConfig() {
+    this->_errorPages[400] = "./static/400-Page.html";
     this->_errorPages[404] = "./static/404-Page.html";
     this->_errorPages[405] = "./static/405-Page.html";
+    this->_errorPages[413] = "./static/413-Page.html";
     this->_errorPages[500] = "./static/500-Page.html";
     this->_errorPages[502] = "./static/502-Page.html";
 

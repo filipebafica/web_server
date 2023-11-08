@@ -14,8 +14,10 @@ void HttpRequestHandler::readRequest(int clientSocket, char** buffer, int buffer
 
     if (bytesRead < 0) {
         std::cerr << "Error reading request" << std::endl;
+        throw std::runtime_error("Could not read from file descriptor");
     } else if (bytesRead == 0) {
         std::cerr << "Client disconnected" << std::endl;
+        throw std::runtime_error("Could not read from file descriptor");
     } else {
         std::cout << "********** REQUEST **********" << std::endl;
         std::cout << *buffer << std::endl;
