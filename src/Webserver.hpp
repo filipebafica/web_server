@@ -64,8 +64,6 @@ class Webserver {
     void handleGET(int clientSocket, std::string& method, std::string& route, std::string& contentType, const Resources& resources) const;
     void handlePOST(int clientSocket, std::string& method, std::string& route, std::string& contentType) const;
     void handleDELETE(int clientSocket);
-
- private:
     std::string getContent(std::string path) const;
     std::string getDirectoryFiles(std::string path) const;
 };

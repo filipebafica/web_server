@@ -52,8 +52,11 @@ void Monitor::loop(void) {
             } catch (ServerResponseException& serverException) {
                 webserver->responseWriter(
                         clientSocket,
-                        serverException.getStatus()
+                        serverException.getStatus(),
+                        "",
+                        webserver->getContent(webserver->getErrorPage(serverException.getStatus())).c_str()
                 );
+                webserver->setAllowResponse(false);
                 this->clean(clientSocket);
             } catch (std::exception& exception) {
                 webserver->responseWriter(
@@ -62,6 +65,7 @@ void Monitor::loop(void) {
                         "",
                         "Internal Server Error"
                 );
+                webserver->setAllowResponse(false);
                 this->clean(clientSocket);
             }
         }
