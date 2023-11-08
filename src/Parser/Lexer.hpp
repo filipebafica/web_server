@@ -37,7 +37,6 @@ private:
     std::vector<Token> _tokenBuffer;
     size_t position;
 
-    // Aqui deveria ser usado unordered_set ao invés de set, mas esta dando erro
     std::set<std::string> _keywords;
 
     void skipWhiteSpacesAndComments();

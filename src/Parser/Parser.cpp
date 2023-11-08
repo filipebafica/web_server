@@ -54,7 +54,7 @@ void Parser::_parseToken(std::string token)
 
 void Parser::_parseServerBlock()
 { 
-    Token token = this->_lexer.consume();
+    Token token = this->_lexer.peek();
     while (token.type != RIGHT_BRACE && token.type != EOF_TOKEN)
     {
         if (token.type == KEYWORD && token.value == std::string("listen"))
@@ -85,14 +85,19 @@ void Parser::_initServerConfig()
 
 void Parser::_parseListenDirective()
 {
-    Token token = this->_lexer.consume();
-    if (token.type != IDENTIFIER || !this->_isValidPort(token.value))
-    {
-        throw std::runtime_error("invalid port with value x");
+    this->_lexer.consume();
+    Token token = this->_lexer.peek();
+    int port = -1;
+    while (token.type == IDENTIFIER) {
+        if (!this->_isValidPort(token.value)) {
+            throw std::runtime_error("invalid port with value x");
+        }
+        port = std::atoi(token.value.c_str());
+        this->_serverConfigs[this->_position].setPort(port);
+        this->_occupiedPorts.insert(port);
+        this->_lexer.consume();
+        token = this->_lexer.peek();
     }
-    int port = std::atoi(token.value.c_str());
-    this->_serverConfigs[this->_position].setPort(port);
-    this->_occupiedPorts.insert(port);
     this->_lexer.consume();
 }
 
@@ -100,13 +105,15 @@ void Parser::_parseServerNameDirective()
 {
     this->_lexer.consume();
     Token token = this->_lexer.peek();
-    while (token.type != SEMICOLON && token.type != EOF_TOKEN) {
+    while (token.type == IDENTIFIER) {
         if (!_isValidServerName(token.value)) {
             throw std::runtime_error("invalid server name");
         }
         this->_serverConfigs[this->_position].setServerName(token.value);
-        token = this->_lexer.consume();
+        this->_lexer.consume();
+        token = this->_lexer.peek();
     }
+    this->_lexer.consume();
 }
 
 void Parser::_parseLocationDirective()
@@ -151,11 +158,6 @@ bool Parser::_isValidPort(std::string &input)
         {
             return false;
         }
-    }
-
-    if (this->_lexer.peek().type != SEMICOLON)
-    {
-        return false;
     }
 
     int port = std::atoi(input.c_str());
@@ -364,6 +366,7 @@ void Parser::_parseErrorPageDirective()
     {
         this->_serverConfigs.back().setErrorPages(errorCodes[idx], errorPagePath);
     }
+    this->_lexer.consume();
     this->_lexer.consume();
 }
 
