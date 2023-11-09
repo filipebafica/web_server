@@ -22,11 +22,12 @@ Parser::Parser(const char* filePath) : _lexer(filePath), _position(0)
 
 std::vector<ServerConfig> Parser::parse()
 {
-    while (this->_lexer.peek().type != EOF_TOKEN)
-    {
-        this->_parseServerConfig();
-    }
-    return this->_serverConfigs;
+
+   while (this->_lexer.peek().type != EOF_TOKEN)
+   {
+       this->_parseServerConfig();
+   }
+   return this->_serverConfigs;
 }
 
 void Parser::_parseServerConfig()
@@ -98,6 +99,11 @@ void Parser::_parseListenDirective()
         this->_lexer.consume();
         token = this->_lexer.peek();
     }
+
+    if (token.type != SEMICOLON) {
+        throw std::runtime_error("the directive must end with a semicolon");
+    }
+
     this->_lexer.consume();
 }
 

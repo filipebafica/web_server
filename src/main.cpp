@@ -12,23 +12,28 @@ int main(int argc, const char* argv[]) {
         std::cout << "You must pass a path to the configuration file" << std::endl;
         return 1;
     }
+    std::vector<ServerConfig> *serverConfigs = NULL;
 
-    Parser parser(argv[1]);
+    try {
+        Parser parser(argv[1]);
+        serverConfigs = new std::vector<ServerConfig>(parser.parse());
+    } catch (const std::exception& e) {
+        std::cerr << e.what() << std::endl;
+        delete serverConfigs;
+        return 1;
+    }
 
-    std::vector<ServerConfig> serverConfigs = parser.parse();
     std::vector<Webserver*> webservers;
-
-    for (size_t i = 0; i < serverConfigs.size(); ++i) {
+    for (size_t i = 0; i < serverConfigs->size(); ++i) {
         webservers.push_back(
                 new Webserver(
-                        &serverConfigs[i],
+                        &((*serverConfigs)[i]),
                         new HttpRequestHandler,
                         new HttpResponseHandler,
                         new CGI
                 )
         );
     }
-
 
     Monitor monitor(&webservers);
     Signals signals(&monitor);
@@ -41,5 +46,6 @@ int main(int argc, const char* argv[]) {
         delete webservers[i]->cgi;
         delete webservers[i];
     }
+    delete serverConfigs;
     return 0;
 }

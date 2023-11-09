@@ -17,7 +17,7 @@ void Monitor::loop(void) {
         this->updatePollFdsVectorWithClientSockets();
 
         if (this->pollEvents() == -1) {
-            std::cerr << "Error in poll" << strerror(errno) << std::endl;
+            std::cerr << "Error in poll" << std::endl;
             continue;
         }
 
@@ -89,9 +89,6 @@ void Monitor::updatePollFdsVectorWithServerSockets(void) {
     */
     // Reset number of servers
     this->numberOfServers = 0;
-
-    // Clear all the fds in the pollFds vector
-//        this->pollFds.clear();
 
     for (size_t i = 0; i < this->webservers->size(); ++i) {
         Webserver* server = (*this->webservers)[i];
