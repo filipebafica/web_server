@@ -373,7 +373,6 @@ void Parser::_parseErrorPageDirective()
         this->_serverConfigs.back().setErrorPages(errorCodes[idx], errorPagePath);
     }
     this->_lexer.consume();
-    this->_lexer.consume();
 }
 
 void Parser::_parseClientMaxBodySizeDirective()

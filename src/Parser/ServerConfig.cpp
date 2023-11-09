@@ -9,7 +9,7 @@ ServerConfig::ServerConfig() {
     this->_errorPages[502] = "./static/502-Page.html";
 
     this->_host = "";
-    this->_clientMaxBodySize = 0;
+    this->_clientMaxBodySize = 1000000;
 }
 
 ServerConfig::~ServerConfig() {}
@@ -245,20 +245,13 @@ std::string ServerConfig::getRoot(std::string method, std::string route)
 std::string ServerConfig::getErrorPage(int statusCode)
 {
     const std::map<int, std::string> errorPages = this->getErrorPages();
-    struct stat buffer;
-    if (errorPages.empty()) {
-        if (stat(DEFAULT_ERROR_PAGE_PATH.c_str(), &buffer) == -1) {
-            throw std::runtime_error("there is no default error page");
-        }
-        return DEFAULT_ERROR_PAGE_PATH;
-    }
 
     std::map<int, std::string>::const_iterator it = errorPages.find(statusCode);
 
     if (it != errorPages.end()) {
         return it->second;
     } else {
-        throw std::runtime_error("there is no error page for specified error");
+        return "";
     }
 }
 

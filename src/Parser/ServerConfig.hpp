@@ -16,8 +16,6 @@
 class ServerConfig: public IServerConfig
 {
 public:
-    const std::string DEFAULT_ERROR_PAGE_PATH;
-
     ServerConfig();
     ~ServerConfig();
 
