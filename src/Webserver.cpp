@@ -67,7 +67,7 @@ void Webserver::createSocket(void) {
          * error when binding the socket to the server address. */
         setsockopt(socketDescriptor, SOL_SOCKET, SO_REUSEADDR, &option, sizeof(option));
         if (socketDescriptor < 0) {
-            std::cerr << "Error creating socket: " << strerror(errno) << std::endl;
+            std::cerr << "Error creating socket" << std::endl;
             exit(1);
         }
         this->serverSockets.push_back(socketDescriptor);
@@ -122,7 +122,7 @@ void Webserver::bindServerSocket(void) {
         );
 
         if (bindToSocket < 0) {
-            std::cerr << "Error binding socket: " << strerror(errno) << std::endl;
+            std::cerr << "Error binding socket" << std::endl;
             exit(1);
         }
     }
