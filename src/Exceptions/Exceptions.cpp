@@ -1,20 +1,26 @@
 #include <Exceptions.hpp>
 
-ServerResponseException::ServerResponseException(int status) 
-    : _status(status) {}
+ServerResponseException::ServerResponseException(int status, const char* reasonPhrase)
+    : _status(status), _reasonPhrase(reasonPhrase) {}
+
+ServerResponseException::~ServerResponseException() throw() {}
 
 int ServerResponseException::getStatus(void) const {
     return this->_status;
 }
 
-PayloadTooLargeException::PayloadTooLargeException(int status)
-    : ServerResponseException(status) {}
+const char* ServerResponseException::getReasonPhrase(void) const {
+    return this->_reasonPhrase;
+}
 
-MethodNotAllowedException::MethodNotAllowedException(int status)
-    : ServerResponseException(status) {}
+PayloadTooLargeException::PayloadTooLargeException(int status, const char* reasonPhrase)
+    : ServerResponseException(status, reasonPhrase) {}
 
-RouteNotFoundException::RouteNotFoundException(int status)
-    : ServerResponseException(status) {}
+MethodNotAllowedException::MethodNotAllowedException(int status, const char* reasonPhrase)
+    : ServerResponseException(status, reasonPhrase) {}
 
-BadRequestException::BadRequestException(int status)
-    : ServerResponseException(status){}
+RouteNotFoundException::RouteNotFoundException(int status, const char* reasonPhrase)
+    : ServerResponseException(status, reasonPhrase) {}
+
+BadRequestException::BadRequestException(int status, const char* reasonPhrase)
+    : ServerResponseException(status, reasonPhrase) {}

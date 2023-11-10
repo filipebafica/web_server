@@ -2,6 +2,7 @@
 #define WEBSERVER_
 
 #include <iostream>
+#include <sstream>
 #include <vector>
 #include <fstream>
 #include <cstdio>
@@ -59,11 +60,12 @@ class Webserver {
     bool isResponseAllowed(void) const;
     void setAllowResponse(bool isResponseAllowed);
     const std::map<std::string, std::string>& getRequest(void) const;
-    void responseWriter(int socket, int statusCode, const char* headers = "", const char* content = "");
+    void responseWriter(int socket, int statusCode, const char* reasonPhrase, const char* headers = "", const char* content = "");
     void send(int clientSocket);
     void handleGET(int clientSocket, std::string& method, std::string& route, std::string& contentType, const Resources& resources) const;
     void handlePOST(int clientSocket, std::string& method, std::string& route, std::string& contentType) const;
     void handleDELETE(int clientSocket);
+//    std::string getResponseHeader(int statusCode, const char* reasonPhrase) const;
     std::string getContent(std::string path) const;
     std::string getDirectoryFiles(std::string path) const;
 };

@@ -6,6 +6,7 @@ public:
     virtual void send(
             int socket,
             int statusCode,
+            const char* reasonPhrase,
             const char* headers,
             const char* content
     ) const = 0;

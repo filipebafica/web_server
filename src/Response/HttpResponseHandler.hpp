@@ -12,6 +12,7 @@ class HttpResponseHandler : public IHttpResponseHandler {
  public:
     void send(int socket,
               int statusCode,
+              const char* reasonPhrase,
               const char* headers,
               const char* content) const;
 };

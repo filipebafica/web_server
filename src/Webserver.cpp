@@ -185,8 +185,8 @@ const std::map<std::string, std::string>& Webserver::getRequest() const {
     return this->httpRequestHandler->getRequest();
 }
 
-void Webserver::responseWriter(int socket, int statusCode, const char *headers, const char *content) {
-    this->httpResponseHandler->send(socket, statusCode, headers, content);
+void Webserver::responseWriter(int socket, int statusCode, const char* reasonPhrase, const char *headers, const char *content) {
+    this->httpResponseHandler->send(socket, statusCode, reasonPhrase, headers, content);
 }
 
 void Webserver::send(int clientSocket) {
@@ -223,7 +223,8 @@ void Webserver::handleGET(
         this->httpResponseHandler->send(
                 clientSocket,
                 403,
-                "",
+                "Forbidden",
+                "content-type:text/html",
                 this->getDirectoryFiles(resources.path).c_str()
         );
 
@@ -248,18 +249,22 @@ void Webserver::handleGET(
         this->httpResponseHandler->send(
                 clientSocket,
                 cgiResponse->getCGIStatus(),
+                "", // TODO: Parsear reasonPhrase do CGI
                 cgiResponse->getCGIHeaders(),
                 cgiResponse->getCGIBody()
         );
         delete cgiResponse;
-    } else {
-        this->httpResponseHandler->send(
-                clientSocket,
-                200,
-                "",
-                this->getContent(resources.path).c_str()
-        );
+
+        return;
     }
+
+    this->httpResponseHandler->send(
+            clientSocket,
+            200,
+            "OK",
+            "content-type:text/html",
+            this->getContent(resources.path).c_str()
+    );
 }
 
 void Webserver::handlePOST(
@@ -273,7 +278,8 @@ void Webserver::handlePOST(
         this->httpResponseHandler->send(
                 clientSocket,
                 200,
-                "",
+                "OK",
+                "content-type:text",
                 "success"
         );
         return;
@@ -296,6 +302,7 @@ void Webserver::handlePOST(
     this->httpResponseHandler->send(
             clientSocket,
             cgiResponse->getCGIStatus(),
+            "", // TODO: Parsear reasonPhrase do CGI
             cgiResponse->getCGIHeaders(),
             "file was uploaded successfully"
     );
@@ -306,10 +313,22 @@ void Webserver::handleDELETE(int clientSocket) {
     this->httpResponseHandler->send(
             clientSocket,
             200,
-            "",
+            "OK",
+            "content-type:text",
             "DELETE has been made"
     );
 }
+
+//std::string Webserver::getResponseHeader(int statusCode, const char* reasonPhrase) const {
+//    std::string protocolVersion = "HTTP/1.1";
+//    std::ostringstream s;
+//
+//    s << statusCode;
+//
+//    (void)reasonPhrase;
+//
+//    return protocolVersion + " " + s.str() + " " + reasonPhrase;
+//}
 
 std::string Webserver::getContent(std::string path) const {
     std::ifstream file;

@@ -53,7 +53,8 @@ void Monitor::loop(void) {
                 webserver->responseWriter(
                         clientSocket,
                         serverException.getStatus(),
-                        "",
+                        serverException.getReasonPhrase(),
+                        "content-type:text/html",
                         webserver->getContent(webserver->getErrorPage(serverException.getStatus())).c_str()
                 );
                 webserver->setAllowResponse(false);
@@ -62,7 +63,8 @@ void Monitor::loop(void) {
                 webserver->responseWriter(
                         clientSocket,
                         500,
-                        "",
+                        "Internal Server Error"
+                        "content-type:text",
                         "Internal Server Error"
                 );
                 webserver->setAllowResponse(false);
