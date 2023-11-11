@@ -594,7 +594,7 @@ void Parser::_parseAllowedMethods()
     {
         if (token.type != IDENTIFIER || !this->_isValidHttpMethod(token.value))
         {
-            throw std::runtime_error("invalid address parameter");
+            throw std::runtime_error("invalid methods parameters");
         }
         this->_serverConfigs.back().getLocations().back().setAllowedMethods(token.value);
         this->_lexer.consume();
@@ -609,9 +609,9 @@ void Parser::_parseAllowedMethods()
     this->_lexer.consume();
 }
 
-bool Parser::_isValidHttpMethod(std::string allowedMethd)
+bool Parser::_isValidHttpMethod(std::string allowedMethod)
 {
-    if (this->_httpMethods.find(allowedMethd) == this->_httpMethods.end())
+    if (this->_httpMethods.find(allowedMethod) == this->_httpMethods.end())
     {
         return false;
     }

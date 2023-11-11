@@ -60,7 +60,7 @@ void HttpRequestHandler::validateRequest(char *buffer, int defaultBufferHeaderSi
         return;
     }
 
-    if ((int)blocks.size() >= defaultBufferHeaderSize) {
+    if ((int)blocks[0].size() >= defaultBufferHeaderSize) {
         std::cerr << "Header too large" << std::endl;
         throw BadRequestException();
     }

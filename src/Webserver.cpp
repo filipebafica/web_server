@@ -224,7 +224,7 @@ void Webserver::handleGET(
                 clientSocket,
                 403,
                 "Forbidden",
-                "content-type:text/html",
+                "Content-Type:text/plain",
                 this->getDirectoryFiles(resources.path).c_str()
         );
 
@@ -262,7 +262,7 @@ void Webserver::handleGET(
             clientSocket,
             200,
             "OK",
-            "content-type:text/html",
+            "Content-Type:text/html",
             this->getContent(resources.path).c_str()
     );
 }
@@ -279,7 +279,7 @@ void Webserver::handlePOST(
                 clientSocket,
                 200,
                 "OK",
-                "content-type:text",
+                "Content-Type:text/plain",
                 "success"
         );
         return;
@@ -314,7 +314,7 @@ void Webserver::handleDELETE(int clientSocket) {
             clientSocket,
             200,
             "OK",
-            "content-type:text",
+            "Content-Type:text/plain",
             "DELETE has been made"
     );
 }

@@ -6,7 +6,6 @@ void HttpResponseHandler::send(int socket,
                                const char* headers,
                                const char* content) const {
     std::stringstream response;
-    std::cout << headers << std::endl;
     response << "HTTP/1.1"
                 << " "
                 << statusCode
