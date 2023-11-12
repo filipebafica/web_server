@@ -259,8 +259,12 @@ bool Parser::_isValidErrorPageDirective(Token token)
 
 bool Parser::_isValidAddress(std::string address)
 {
-    // TODO: Check the line below
-    (void)address;
+    if (address[0] != '/') {
+        return false;
+    }
+    if (address.length() > 1 && address[address.size() - 1] == '/') {
+        return false;
+    }
     return true;
 }
 

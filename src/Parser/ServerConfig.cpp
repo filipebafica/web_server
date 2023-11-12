@@ -140,8 +140,6 @@ Resources ServerConfig::_getResourcePathFile(int locationPosition, std::string r
 
     if (this->_isRequestedRouteDirectory(requestedRoute))
     {
-        std::cout << "_isRequestedRouteDirectory" << std::endl;
-
         return(this->_getResourcePathFromDirectory(locationPosition, locationRoot, requestedRoute));
     }
     return(this->_getResourcePathFromFile(locationPosition, locationRoot, requestedRoute));
@@ -201,7 +199,7 @@ bool ServerConfig::_fileExists(std::string& fileName)
     {
         return false;
     }
-    return true;
+    return S_ISREG(buffer.st_mode);
 }
 
 Resources ServerConfig::_getResourcePathFromFile(int locationPosition, std::string locationRoot, std::string requestedRoute)

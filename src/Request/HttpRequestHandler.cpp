@@ -56,11 +56,12 @@ void HttpRequestHandler::validateRequest(char *buffer, int defaultBufferHeaderSi
     // Splits the request blocks (header and body)
     std::vector<std::string> blocks = this->tokenize(buffer, HEADER_AND_BODY_DELIMITER);
 
+    /* Validates if request was completed read */
     if (blocks.empty()) {
-        return;
+        throw BadRequestException();
     }
 
-    if ((int)blocks[0].size() >= defaultBufferHeaderSize) {
+    if ((int)blocks[0].size() > defaultBufferHeaderSize) {
         std::cerr << "Header too large" << std::endl;
         throw BadRequestException();
     }
@@ -223,7 +224,7 @@ std::vector<std::string> HttpRequestHandler::tokenize(const char* s, const char*
         text.erase(0, pos + delimiter.length());
     }
 
-    if (!text.empty()) {
+    if (!text.empty() && !tokens.empty()) {
         tokens.push_back(text);
     }
 
