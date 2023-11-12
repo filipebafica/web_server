@@ -18,7 +18,7 @@ class CGIRequest {
 
     const std::string contentLen;
     const std::string contentType;
-    const std::string body;
+    const std::vector<char>& body;
 
     const std::string customScriptPath;
 
@@ -31,7 +31,7 @@ class CGIRequest {
       const std::string querystring,
       const std::string contentLen,
       const std::string contentType,
-      const std::string body,
+      const std::vector<char>& body,
       const std::string customScriptPath = std::string());
 
     ~CGIRequest();

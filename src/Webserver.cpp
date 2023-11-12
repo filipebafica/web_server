@@ -229,8 +229,8 @@ void Webserver::handleGET(
                 this->httpRequestHandler->getHeader("QueryString"),
                 this->httpRequestHandler->getHeader("Content-Length"),
                 contentType,
-                this->httpRequestHandler->getHeader("Body"),
-                // this->httpRequestHandler->getBody(),
+                // this->httpRequestHandler->getHeader("Body"),
+                this->httpRequestHandler->getBody(),
                 "/home/vlima-nu/42/web_server/static/listDir.php"
         );
 
@@ -257,8 +257,8 @@ void Webserver::handleGET(
                 this->httpRequestHandler->getHeader("QueryString"),
                 this->httpRequestHandler->getHeader("Content-Length"),
                 contentType,
-                this->httpRequestHandler->getHeader("Body")
-                // this->httpRequestHandler->getBody()
+                // this->httpRequestHandler->getHeader("Body")
+                this->httpRequestHandler->getBody()
         );
 
         CGIResponse* cgiResponse = this->cgi->execute(cgiReq);
@@ -311,8 +311,8 @@ void Webserver::handlePOST(
             this->httpRequestHandler->getHeader("QueryString"),
             this->httpRequestHandler->getHeader("Content-Length"),
             contentType,
-            this->httpRequestHandler->getHeader("Body")
-            // this->httpRequestHandler->getBody()
+            // this->httpRequestHandler->getHeader("Body")
+            this->httpRequestHandler->getBody()
     );
 
     CGIResponse* cgiResponse = this->cgi->execute(cgiReq);

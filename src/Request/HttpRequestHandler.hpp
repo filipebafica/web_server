@@ -19,10 +19,13 @@ public:
     void parseRequest(char* buffer, int defaultBufferHeaderSize, int clientMaxBodySize);
     const std::map<std::string, std::string>& getRequest() const;
     std::string getHeader(const std::string& key) const;
+    const std::vector<char>& getBody(void) const;
     void parseURI(void);
 
 private:
     std::map<std::string, std::string> request;
+    std::vector<char> body;
+    size_t requestLen;
 
     void validateRequest(char* buffer, int defaultBufferHeaderSize, int clientMaxBodySize);
     void parseRequestLine(char* buffer);

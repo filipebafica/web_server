@@ -6,7 +6,9 @@
 #define RD 0 /* Read end pipe index */
 #define WR 1 /* Write end pipe index */
 
-// /*
+// #include <fcntl.h>
+
+/*
 uint8_t *body =  (uint8_t *)\
     "-----------------------------115407863137634137613693109055\r\n"
     "Content-Disposition: form-data; name=\"file\"; filename=\"inception.txt\"\r\n"
@@ -31,11 +33,11 @@ uint8_t *body =  (uint8_t *)\
 const char *contentType = \
     "multipart/form-data; boundary=---------------------------115407863137634137613693109055";
 
+*/
 #include <sstream>
 
 #define SSTR( x ) static_cast< std::ostringstream & >( \
         ( std::ostringstream() << std::dec << x ) ).str()
-// */
 
 CGI::CGI(void) {}
 
@@ -44,6 +46,17 @@ CGI::~CGI() {}
 CGIResponse* CGI::execute(const CGIRequest& request) {
     int pipeFdToChild[2];
     int pipeFdFromChild[2];
+
+    // if (request.body.size()) {
+    //     int inputFile = open("tmp", O_CREAT | O_WRONLY | O_TRUNC);
+
+    //     if (inputFile > 0) {
+    //         write(inputFile, request.body.data(), request.body.size());
+    //         close(inputFile);
+    //     } else {
+    //         std::cout << "Failed to open file to write" << std::endl;
+    //     }
+    // }
 
     if (pipe(pipeFdToChild) == -1 || pipe(pipeFdFromChild) == -1) {
         std::cerr << "pipe() failed" << std::endl;
@@ -67,7 +80,7 @@ CGIResponse* CGI::execute(const CGIRequest& request) {
         this->_setEnvironment(request);
         close(pipeFdToChild[WR]);
 
-        // size_t bytes;
+        // size_t bytes;    
         // char buffer[256];
 
         // std::cout << "Input from child process: " << std::endl;
@@ -76,6 +89,16 @@ CGIResponse* CGI::execute(const CGIRequest& request) {
         //     std::cout << buffer;
         // }
         // std::cout << std::endl;
+
+
+        // if (request.body.size()) {
+        //     int inputFile = open("tmp", O_RDONLY);
+        //     if (inputFile > 0) {
+        //         dup2(inputFile, STDIN_FILENO);
+        //     } else {
+        //         std::cout << "Failed to open file to read" << std::endl;
+        //     }
+        // }
 
         dup2(pipeFdFromChild[WR], STDOUT_FILENO);
         dup2(pipeFdToChild[RD], STDIN_FILENO);
@@ -93,10 +116,10 @@ CGIResponse* CGI::execute(const CGIRequest& request) {
     close(pipeFdToChild[RD]);
     /* Writes request body through the pipe to the child process */
     if (request.body.size()) {
-        // std::cout << __func__ << ": Request body size: " << request.body.size() + 1 << std::endl;
-        // write(pipeFdToChild[WR], request.body.c_str(), request.body.size() + 1);
-        std::cout << __func__ << ": Request body size: " << strlen((char *)body) + 1 << std::endl;
-        write(pipeFdToChild[WR], body, strlen((char *)body) + 1);
+        std::cout << __func__ << ": Request body size: " << request.body.size() << std::endl;
+        write(pipeFdToChild[WR], request.body.data(), request.body.size());
+        // std::cout << __func__ << ": Request body size: " << strlen((char *)body) + 1 << std::endl;
+        // write(pipeFdToChild[WR], body, strlen((char *)body) + 1);
     }
     close(pipeFdToChild[WR]);
     waitpid(pid, NULL, 0);
@@ -136,10 +159,10 @@ void CGI::_setEnvironment(const CGIRequest& request) {
         this->_envp.setVariable("SCRIPT_FILENAME", request.serverRoot + request.uri);
     }
     if (request.method == "POST") {
-        // this->_envp.setVariable("CONTENT_LENGTH", request.contentLen);
-        // this->_envp.setVariable("CONTENT_TYPE", request.contentType);
-        this->_envp.setVariable("CONTENT_LENGTH", "509");
-        this->_envp.setVariable("CONTENT_TYPE", contentType);
+        this->_envp.setVariable("CONTENT_LENGTH", SSTR(request.body.size()));
+        this->_envp.setVariable("CONTENT_TYPE", request.contentType);
+        // this->_envp.setVariable("CONTENT_LENGTH", "509");
+        // this->_envp.setVariable("CONTENT_TYPE", contentType);
     }
     if (request.querystring.size()) {
         this->_envp.setVariable("QUERY_STRING", request.querystring);
