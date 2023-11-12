@@ -9,7 +9,8 @@ CGIRequest::CGIRequest(
     const std::string querystring,
     const std::string contentLen,
     const std::string contentType,
-    const std::string body)
+    const std::string body,
+    const std::string customScriptPath)
     : method(method)
     , accept(accept)
     , agent(agent)
@@ -18,6 +19,7 @@ CGIRequest::CGIRequest(
     , querystring(querystring)
     , contentLen(contentLen)
     , contentType(contentType)
-    , body(body) {}
+    , body(body)
+    , customScriptPath(customScriptPath) {}
 
 CGIRequest::~CGIRequest() {}

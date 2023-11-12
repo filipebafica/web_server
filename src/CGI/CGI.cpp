@@ -85,7 +85,11 @@ void CGI::_setEnvironment(const CGIRequest& request) {
     this->_envp.setVariable("HTTP_USER_AGENT", request.agent);
 
     this->_envp.setVariable("DOCUMENT_ROOT", request.serverRoot);
-    this->_envp.setVariable("SCRIPT_FILENAME", request.serverRoot + request.uri);
+    if (!request.customScriptPath.empty()) {
+        this->_envp.setVariable("SCRIPT_FILENAME", request.customScriptPath);
+    } else {
+        this->_envp.setVariable("SCRIPT_FILENAME", request.serverRoot + request.uri);
+    }
     if (request.method == "POST") {
         this->_envp.setVariable("CONTENT_LENGTH", request.contentLen);
         this->_envp.setVariable("CONTENT_TYPE", request.contentType);

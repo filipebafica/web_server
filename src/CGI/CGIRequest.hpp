@@ -1,7 +1,10 @@
 #ifndef SRC_CGI_CGIREQUEST_HPP_
 #define SRC_CGI_CGIREQUEST_HPP_
 
+#include <stdint.h>
+
 #include <string>
+#include <vector>
 
 class CGIRequest {
  public:
@@ -17,6 +20,8 @@ class CGIRequest {
     const std::string contentType;
     const std::string body;
 
+    const std::string customScriptPath;
+
     CGIRequest(
       const std::string method,
       const std::string accept,
@@ -26,7 +31,8 @@ class CGIRequest {
       const std::string querystring,
       const std::string contentLen,
       const std::string contentType,
-      const std::string body);
+      const std::string body,
+      const std::string customScriptPath = std::string());
 
     ~CGIRequest();
 };
