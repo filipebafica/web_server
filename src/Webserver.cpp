@@ -208,7 +208,7 @@ void Webserver::send(int clientSocket) {
     }
 
     if (std::string("DELETE") == method) {
-        this->handleDELETE(clientSocket);
+        this->handleDELETE(clientSocket, resources);
     }
 }
 
@@ -220,14 +220,30 @@ void Webserver::handleGET(
         const Resources& resources
     ) const {
     if (resources.isDirectory) {
+        CGIRequest cgiReq = CGIRequest(
+                method,
+                this->httpRequestHandler->getHeader("Accept"),
+                this->httpRequestHandler->getHeader("User-Agent"),
+                this->serverConfig->getRoot(method, route),
+                this->httpRequestHandler->getHeader("DecodedURI"),
+                this->httpRequestHandler->getHeader("QueryString"),
+                this->httpRequestHandler->getHeader("Content-Length"),
+                contentType,
+                this->httpRequestHandler->getHeader("Body"),
+                // this->httpRequestHandler->getBody(),
+                "/home/vlima-nu/42/web_server/static/listDir.php"
+        );
+
+        CGIResponse* cgiResponse = this->cgi->execute(cgiReq);
+
         this->httpResponseHandler->send(
                 clientSocket,
                 403,
-                "Forbidden",
-                "Content-Type:text/plain",
-                this->getDirectoryFiles(resources.path).c_str()
+                "", // TODO: Parsear reasonPhrase do CGI
+                cgiResponse->getCGIHeaders(),
+                cgiResponse->getCGIBody()
         );
-
+        delete cgiResponse;
         return;
     }
 
@@ -242,6 +258,7 @@ void Webserver::handleGET(
                 this->httpRequestHandler->getHeader("Content-Length"),
                 contentType,
                 this->httpRequestHandler->getHeader("Body")
+                // this->httpRequestHandler->getBody()
         );
 
         CGIResponse* cgiResponse = this->cgi->execute(cgiReq);
@@ -295,6 +312,7 @@ void Webserver::handlePOST(
             this->httpRequestHandler->getHeader("Content-Length"),
             contentType,
             this->httpRequestHandler->getHeader("Body")
+            // this->httpRequestHandler->getBody()
     );
 
     CGIResponse* cgiResponse = this->cgi->execute(cgiReq);
@@ -309,26 +327,28 @@ void Webserver::handlePOST(
     delete cgiResponse;
 }
 
-void Webserver::handleDELETE(int clientSocket) {
-    this->httpResponseHandler->send(
-            clientSocket,
-            200,
-            "OK",
-            "Content-Type:text/plain",
-            "DELETE has been made"
-    );
+void Webserver::handleDELETE(int clientSocket, const Resources& resources) {
+    if (resources.isDirectory) {
+        throw BadRequestException();
+    }
+    if (remove(resources.path.c_str()) == 0) {
+        this->httpResponseHandler->send(
+                clientSocket,
+                200,
+                "OK",
+                "Content-Type:text/plain",
+                "DELETE has been made"
+        );
+    } else {
+        this->httpResponseHandler->send(
+                clientSocket,
+                500,
+                "Internal Server Error",
+                "Content-Type:text/plain",
+                ""
+        );
+    }
 }
-
-//std::string Webserver::getResponseHeader(int statusCode, const char* reasonPhrase) const {
-//    std::string protocolVersion = "HTTP/1.1";
-//    std::ostringstream s;
-//
-//    s << statusCode;
-//
-//    (void)reasonPhrase;
-//
-//    return protocolVersion + " " + s.str() + " " + reasonPhrase;
-//}
 
 std::string Webserver::getContent(std::string path) const {
     std::ifstream file;

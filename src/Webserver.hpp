@@ -64,8 +64,7 @@ class Webserver {
     void send(int clientSocket);
     void handleGET(int clientSocket, std::string& method, std::string& route, std::string& contentType, const Resources& resources) const;
     void handlePOST(int clientSocket, std::string& method, std::string& route, std::string& contentType) const;
-    void handleDELETE(int clientSocket);
-//    std::string getResponseHeader(int statusCode, const char* reasonPhrase) const;
+    void handleDELETE(int clientSocket, const Resources& resources);
     std::string getContent(std::string path) const;
     std::string getDirectoryFiles(std::string path) const;
 };
