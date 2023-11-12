@@ -1,4 +1,5 @@
 #include <Monitor.hpp>
+#include <fcntl.h>
 
 Monitor::Monitor(std::vector<Webserver*>* webservers) {
     // Injects dependencies
@@ -38,13 +39,13 @@ void Monitor::loop(void) {
             try {
                 // Handles request side
                 if (this->pollFds[i].revents & POLLIN) {
+                    webserver->updateClientBuffers(clientSocket);
                     webserver->readRequest(clientSocket);
-                    webserver->parseRequest();
                     webserver->setAllowResponse(true);
                 }
-
                 // Handles response side
-                if ((this->pollFds[i].revents & POLLOUT) && webserver->isResponseAllowed()) {
+                else if ((this->pollFds[i].revents & POLLOUT) && webserver->isResponseAllowed()) {
+                    webserver->parseRequest(clientSocket);
                     webserver->send(clientSocket);
                     webserver->setAllowResponse(false);
                     this->clean(clientSocket);
@@ -156,6 +157,7 @@ void Monitor::updateClientSocketsVector(int serverSocket) {
         std::cerr << "Error accepting connection" << std::endl;
         return;
     }
+
 
     // Add the new client socket to the list
     this->clientSockets.push_back(clientSocket);

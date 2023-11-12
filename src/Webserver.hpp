@@ -28,6 +28,7 @@ class Webserver {
     int defaultBufferHeaderSize;
     int clientMaxBodySize;
     int bufferSize;
+    std::map<int, std::vector<char> > clientBuffers;
     char* buffer;
 
  public:
@@ -56,14 +57,15 @@ class Webserver {
     Resources getResources(std::string& method, std::string& route) const;
     std::string getErrorPage(int statusCode) const;
     void readRequest(int clientSocket);
-    void parseRequest(void);
+    void parseRequest(int clientSocket);
     bool isResponseAllowed(void) const;
     void setAllowResponse(bool isResponseAllowed);
     const std::map<std::string, std::string>& getRequest(void) const;
     void responseWriter(int socket, int statusCode, const char* reasonPhrase, const char* headers = "", const char* content = "");
+    void updateClientBuffers(int clientSocket);
     void send(int clientSocket);
-    void handleGET(int clientSocket, std::string& method, std::string& route, std::string& contentType, const Resources& resources) const;
-    void handlePOST(int clientSocket, std::string& method, std::string& route, std::string& contentType) const;
+    void handleGET(int clientSocket, std::string& method, std::string& route, std::string& contentType, const Resources& resources);
+    void handlePOST(int clientSocket, std::string& method, std::string& route, std::string& contentType);
     void handleDELETE(int clientSocket, const Resources& resources);
     std::string getContent(std::string path) const;
     std::string getDirectoryFiles(std::string path) const;

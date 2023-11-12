@@ -11,8 +11,8 @@
 #define EXPECTED_NUMBER_OF_TOKENS_IN_A_REQUEST_LINE 3
 #define HEADER_AND_BODY_DELIMITER_LEN 4
 
-void HttpRequestHandler::readRequest(int clientSocket, char** buffer, int bufferSize) {
-    std::memset(*buffer, 0, bufferSize);
+void HttpRequestHandler::readRequest(int clientSocket, std::vector<char>& clientBuffer, int bufferSize) {
+//    std::memset(*buffer, 0, bufferSize);
     // ssize_t totalBytesRead = 0;
     // ssize_t bytesRead;
 
@@ -24,8 +24,10 @@ void HttpRequestHandler::readRequest(int clientSocket, char** buffer, int buffer
     //         break;
     //     }
     // }
-    ssize_t bytesRead = read(clientSocket, *buffer + totalBytesRead, bufferSize - 1 - totalBytesRead);
 
+
+
+    ssize_t bytesRead = read(clientSocket, this->defaultBuffer, sizeof(this->defaultBuffer) - 1);
     if (bytesRead < 0) {
         std::cerr << "Error reading request" << std::endl;
         throw std::runtime_error("Could not read from file descriptor");
@@ -33,29 +35,37 @@ void HttpRequestHandler::readRequest(int clientSocket, char** buffer, int buffer
         std::cerr << "Client disconnected" << std::endl;
         throw std::runtime_error("Could not read from file descriptor");
     } else {
-        this->requestLen = bytesRead;
-        std::cout << __func__ << ": Bytes read: " << this->requestLen << std::endl;
+        std::cout << __func__ << ": Bytes read: " << bytesRead<< std::endl;
         std::cout << __func__ << ": BufferSize: " << bufferSize << std::endl;
+
+        this->defaultBuffer[bytesRead] = 0;
+        clientBuffer.insert(clientBuffer.end(), this->defaultBuffer, this->defaultBuffer + bytesRead);
+
         std::cout << "********** REQUEST **********" << std::endl;
-        std::cout << *buffer << std::endl;
+        std::cout << this->defaultBuffer << std::endl;
     }
 }
 
-void HttpRequestHandler::parseRequest(char* buffer, int defaultBufferHeaderSize, int clientMaxBodySize) {
+void HttpRequestHandler::parseRequest(std::vector<char>& clientBuffer, int defaultBufferHeaderSize, int clientMaxBodySize) {
+    // Delimits the end of the request
+    clientBuffer.push_back(0);
+    this->requestLen = clientBuffer.size();
+
+
     // Validates Request size
-    this->validateRequest(buffer, defaultBufferHeaderSize, clientMaxBodySize);
+    this->validateRequest(clientBuffer.data(), defaultBufferHeaderSize, clientMaxBodySize);
 
     // Parses Request-Line (first line)
-    this->parseRequestLine(buffer);
+    this->parseRequestLine(clientBuffer.data());
 
     // Parses Request-Header
-    this->parseRequestHeader(buffer);
+    this->parseRequestHeader(clientBuffer.data());
 
     // Decodes URI, get 
     this->parseURI();
 
     // Parses the Request-Body
-    this->parseRequestBody(buffer);
+    this->parseRequestBody(clientBuffer.data());
 }
 
 const std::map<std::string, std::string>& HttpRequestHandler::getRequest() const {

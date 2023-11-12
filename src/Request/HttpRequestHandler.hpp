@@ -15,8 +15,8 @@
 
 class HttpRequestHandler : public IHttpRequestHandler {
 public:
-    void readRequest(int clientSocket, char** buffer, int bufferSize);
-    void parseRequest(char* buffer, int defaultBufferHeaderSize, int clientMaxBodySize);
+    void readRequest(int clientSocket, std::vector<char>& clientBuffer, int bufferSize);
+    void parseRequest(std::vector<char>& clientBuffer, int defaultBufferHeaderSize, int clientMaxBodySize);
     const std::map<std::string, std::string>& getRequest() const;
     std::string getHeader(const std::string& key) const;
     const std::vector<char>& getBody(void) const;
@@ -26,6 +26,7 @@ private:
     std::map<std::string, std::string> request;
     std::vector<char> body;
     size_t requestLen;
+    char defaultBuffer[1024 * 1024];
 
     void validateRequest(char* buffer, int defaultBufferHeaderSize, int clientMaxBodySize);
     void parseRequestLine(char* buffer);

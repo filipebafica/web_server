@@ -164,13 +164,13 @@ std::string Webserver::getErrorPage(int statusCode) const {
 void Webserver::readRequest(int clientSocket) {
     this->httpRequestHandler->readRequest(
             clientSocket,
-            &this->buffer,
+            this->clientBuffers[clientSocket],
             this->bufferSize
     );
 }
 
-void Webserver::parseRequest(void) {
-    this->httpRequestHandler->parseRequest(this->buffer, this->defaultBufferHeaderSize, this->clientMaxBodySize);
+void Webserver::parseRequest(int clientSocket) {
+    this->httpRequestHandler->parseRequest(this->clientBuffers[clientSocket], this->defaultBufferHeaderSize, this->clientMaxBodySize);
 }
 
 bool Webserver::isResponseAllowed(void) const {
@@ -187,6 +187,16 @@ const std::map<std::string, std::string>& Webserver::getRequest() const {
 
 void Webserver::responseWriter(int socket, int statusCode, const char* reasonPhrase, const char *headers, const char *content) {
     this->httpResponseHandler->send(socket, statusCode, reasonPhrase, headers, content);
+
+    this->clientBuffers.erase(socket);
+}
+
+void Webserver::updateClientBuffers(int clientSocket) {
+    if (this->clientBuffers.find(clientSocket) != this->clientBuffers.end()) {
+        return;
+    }
+
+    this->clientBuffers.insert(std::pair<int, std::vector<char> >(clientSocket, std::vector<char>()));
 }
 
 void Webserver::send(int clientSocket) {
@@ -218,7 +228,7 @@ void Webserver::handleGET(
         std::string& route,
         std::string& contentType,
         const Resources& resources
-    ) const {
+    ) {
     if (resources.isDirectory) {
         CGIRequest cgiReq = CGIRequest(
                 method,
@@ -236,7 +246,7 @@ void Webserver::handleGET(
 
         CGIResponse* cgiResponse = this->cgi->execute(cgiReq);
 
-        this->httpResponseHandler->send(
+        this->responseWriter(
                 clientSocket,
                 403,
                 "", // TODO: Parsear reasonPhrase do CGI
@@ -263,7 +273,7 @@ void Webserver::handleGET(
 
         CGIResponse* cgiResponse = this->cgi->execute(cgiReq);
 
-        this->httpResponseHandler->send(
+        this->responseWriter(
                 clientSocket,
                 cgiResponse->getCGIStatus(),
                 "", // TODO: Parsear reasonPhrase do CGI
@@ -275,7 +285,7 @@ void Webserver::handleGET(
         return;
     }
 
-    this->httpResponseHandler->send(
+    this->responseWriter(
             clientSocket,
             200,
             "OK",
@@ -289,10 +299,10 @@ void Webserver::handlePOST(
         std::string& method,
         std::string& route,
         std::string& contentType
-    ) const {
+    ) {
 
     if (contentType.find("multipart/form-data") == std::string::npos) {
-        this->httpResponseHandler->send(
+        this->responseWriter(
                 clientSocket,
                 200,
                 "OK",
@@ -317,7 +327,7 @@ void Webserver::handlePOST(
 
     CGIResponse* cgiResponse = this->cgi->execute(cgiReq);
 
-    this->httpResponseHandler->send(
+    this->responseWriter(
             clientSocket,
             cgiResponse->getCGIStatus(),
             "", // TODO: Parsear reasonPhrase do CGI
@@ -332,7 +342,7 @@ void Webserver::handleDELETE(int clientSocket, const Resources& resources) {
         throw BadRequestException();
     }
     if (remove(resources.path.c_str()) == 0) {
-        this->httpResponseHandler->send(
+        this->responseWriter(
                 clientSocket,
                 200,
                 "OK",
@@ -340,7 +350,7 @@ void Webserver::handleDELETE(int clientSocket, const Resources& resources) {
                 "DELETE has been made"
         );
     } else {
-        this->httpResponseHandler->send(
+        this->responseWriter(
                 clientSocket,
                 500,
                 "Internal Server Error",
