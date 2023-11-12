@@ -23,7 +23,7 @@ int main(void) {
         "",
         "",
         "/home/vlima-nu/42/web-server/static",
-        "/",
+        "/postFile.php",
         "",
         "230",
         contentType,

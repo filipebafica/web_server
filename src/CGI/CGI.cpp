@@ -6,6 +6,37 @@
 #define RD 0 /* Read end pipe index */
 #define WR 1 /* Write end pipe index */
 
+// /*
+uint8_t *body =  (uint8_t *)\
+    "-----------------------------115407863137634137613693109055\r\n"
+    "Content-Disposition: form-data; name=\"file\"; filename=\"inception.txt\"\r\n"
+    "Content-Type: text/plain\r\n"
+    "\r\n"
+    "0Lza(#Ad6VtXE7zR0LZXdRN$\n"
+    "\n"
+    "\n"
+    "DOMAIN_NAME=vlima-nu.42.fr\n"
+    "\n"
+    "MYSQL_HOST=mariadb\n"
+    "MYSQL_DATABASE=wordpress\n"
+    "MYSQL_ROOT=root\n"
+    "MYSQL_ROOT_PASSWORD='0Lza(#Ad6VtXE7zR0LZXdRN$'\n"
+    "MYSQL_USER=vlima-nu\n"
+    "MYSQL_PASSWORD='0Lza(#Ad6VtXE7zR0LZXdRN$'\n"
+    "WORDPRESS_USER=cadet\n"
+    "WORDPRESS_PASSWORD=123\n"
+    "-----------------------------115407863137634137613693109055--";
+    // "\r\n\r\n";
+
+const char *contentType = \
+    "multipart/form-data; boundary=---------------------------115407863137634137613693109055";
+
+#include <sstream>
+
+#define SSTR( x ) static_cast< std::ostringstream & >( \
+        ( std::ostringstream() << std::dec << x ) ).str()
+// */
+
 CGI::CGI(void) {}
 
 CGI::~CGI() {}
@@ -36,6 +67,16 @@ CGIResponse* CGI::execute(const CGIRequest& request) {
         this->_setEnvironment(request);
         close(pipeFdToChild[WR]);
 
+        // size_t bytes;
+        // char buffer[256];
+
+        // std::cout << "Input from child process: " << std::endl;
+        // while ((bytes = read(pipeFdToChild[RD], buffer, sizeof(buffer) - 1)) > 0) {
+        //     buffer[bytes] = 0;
+        //     std::cout << buffer;
+        // }
+        // std::cout << std::endl;
+
         dup2(pipeFdFromChild[WR], STDOUT_FILENO);
         dup2(pipeFdToChild[RD], STDIN_FILENO);
 
@@ -52,7 +93,10 @@ CGIResponse* CGI::execute(const CGIRequest& request) {
     close(pipeFdToChild[RD]);
     /* Writes request body through the pipe to the child process */
     if (request.body.size()) {
-        write(pipeFdToChild[WR], request.body.c_str(), request.body.size() + 1);
+        // std::cout << __func__ << ": Request body size: " << request.body.size() + 1 << std::endl;
+        // write(pipeFdToChild[WR], request.body.c_str(), request.body.size() + 1);
+        std::cout << __func__ << ": Request body size: " << strlen((char *)body) + 1 << std::endl;
+        write(pipeFdToChild[WR], body, strlen((char *)body) + 1);
     }
     close(pipeFdToChild[WR]);
     waitpid(pid, NULL, 0);
@@ -68,6 +112,7 @@ CGIResponse* CGI::execute(const CGIRequest& request) {
     }
     close(pipeFdFromChild[RD]);
 
+    std::cout << __func__ << ": " << rawCGIResponse << std::endl;
     return new CGIResponse(rawCGIResponse);
 }
 
@@ -91,10 +136,13 @@ void CGI::_setEnvironment(const CGIRequest& request) {
         this->_envp.setVariable("SCRIPT_FILENAME", request.serverRoot + request.uri);
     }
     if (request.method == "POST") {
-        this->_envp.setVariable("CONTENT_LENGTH", request.contentLen);
-        this->_envp.setVariable("CONTENT_TYPE", request.contentType);
+        // this->_envp.setVariable("CONTENT_LENGTH", request.contentLen);
+        // this->_envp.setVariable("CONTENT_TYPE", request.contentType);
+        this->_envp.setVariable("CONTENT_LENGTH", "509");
+        this->_envp.setVariable("CONTENT_TYPE", contentType);
     }
     if (request.querystring.size()) {
         this->_envp.setVariable("QUERY_STRING", request.querystring);
     }
+    this->_envp.dumpEnv();
 }
