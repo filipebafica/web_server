@@ -24,3 +24,6 @@ RouteNotFoundException::RouteNotFoundException(int status, const char* reasonPhr
 
 BadRequestException::BadRequestException(int status, const char* reasonPhrase)
     : ServerResponseException(status, reasonPhrase) {}
+
+RequestHeaderFieldsTooLargeException::RequestHeaderFieldsTooLargeException(int status, const char* reasonPhrase)
+    : ServerResponseException(status, reasonPhrase) {}

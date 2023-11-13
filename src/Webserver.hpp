@@ -29,7 +29,6 @@ class Webserver {
     int clientMaxBodySize;
     int bufferSize;
     std::map<int, std::vector<char> > clientBuffers;
-    char* buffer;
 
  public:
     IServerConfig* serverConfig;
@@ -50,9 +49,8 @@ class Webserver {
     void setupAddress(void);
     void bindServerSocket(void);
     void startListening(void) const;
+    void setBufferHeaderSize(void);
     void setClientMaxBodySize(void);
-    void setBufferSize(void);
-    void setBuffer(void);
     std::vector<int> getServerSockets(void) const;
     Resources getResources(std::string& method, std::string& route) const;
     std::string getErrorPage(int statusCode) const;

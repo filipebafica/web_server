@@ -9,7 +9,7 @@
 
 class IHttpRequestHandler {
 public:
-    virtual void readRequest(int clientSocket, std::vector<char>& clientBuffer, int bufferSize) = 0;
+    virtual void readRequest(int clientSocket, std::vector<char>& clientBuffer) = 0;
     virtual void parseRequest(std::vector<char>& clientBuffer, int defaultBufferHeaderSize, int clientMaxBodySize) = 0;
     virtual const std::map<std::string, std::string>& getRequest() const = 0;
     virtual std::string getHeader(const std::string& key) const = 0;

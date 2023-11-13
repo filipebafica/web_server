@@ -14,16 +14,14 @@ Webserver::Webserver(
 
     // Initializes attributes
     this->allowResponse = false;
-    this->defaultBufferHeaderSize = 1024;
 
     // Setups server
     this->setupAddress();
     this->createSocket();
     this->bindServerSocket();
     this->startListening();
+    this->setBufferHeaderSize();
     this->setClientMaxBodySize();
-    this->setBufferSize();
-    this->setBuffer();
 }
 
 Webserver::~Webserver() {
@@ -34,8 +32,6 @@ Webserver::~Webserver() {
     for (size_t i = 0; i < this->serverSockets.size(); i++) {
         close(this->serverSockets[i]);
     }
-
-    delete this->buffer;
 }
 
 void Webserver::createSocket(void) {
@@ -137,16 +133,12 @@ void Webserver::startListening(void) const {
     }
 }
 
+void Webserver::setBufferHeaderSize(void) {
+    this->defaultBufferHeaderSize = 1024;
+}
+
 void Webserver::setClientMaxBodySize(void) {
     this->clientMaxBodySize = this->serverConfig->getClientMaxBodySize();
-}
-
-void Webserver::setBufferSize(void) {
-    this->bufferSize = this->defaultBufferHeaderSize + this->clientMaxBodySize;
-}
-
-void Webserver::setBuffer(void) {
-    this->buffer = new char[this->bufferSize];
 }
 
 std::vector<int> Webserver::getServerSockets(void) const {
@@ -164,8 +156,7 @@ std::string Webserver::getErrorPage(int statusCode) const {
 void Webserver::readRequest(int clientSocket) {
     this->httpRequestHandler->readRequest(
             clientSocket,
-            this->clientBuffers[clientSocket],
-            this->bufferSize
+            this->clientBuffers[clientSocket]
     );
 }
 

@@ -37,4 +37,9 @@ public:
     explicit BadRequestException(int status = 400, const char* reasonPhrase = "Bad Request");
 };
 
+class  RequestHeaderFieldsTooLargeException : public ServerResponseException {
+public:
+    explicit RequestHeaderFieldsTooLargeException(int status = 413, const char* reasonPhrase = " Request Header Fields Too Large ");
+};
+
 #endif /* SRC_EXCEPTIONS_EXCEPTIONS_HPP_ */

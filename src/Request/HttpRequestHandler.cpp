@@ -11,22 +11,7 @@
 #define EXPECTED_NUMBER_OF_TOKENS_IN_A_REQUEST_LINE 3
 #define HEADER_AND_BODY_DELIMITER_LEN 4
 
-void HttpRequestHandler::readRequest(int clientSocket, std::vector<char>& clientBuffer, int bufferSize) {
-//    std::memset(*buffer, 0, bufferSize);
-    // ssize_t totalBytesRead = 0;
-    // ssize_t bytesRead;
-
-    // std::cout << "Reading request" << std::endl;
-    // while ((bytesRead = read(clientSocket, *buffer + totalBytesRead, bufferSize - totalBytesRead - 1)) > 0) {
-    //     totalBytesRead += bytesRead;
-    //     std::cout << "Bytes read: " << bytesRead << std::endl;
-    //     if (recv(clientSocket, buffer, bufferSize - totalBytesRead - 1, MSG_PEEK) <= 0) {
-    //         break;
-    //     }
-    // }
-
-
-
+void HttpRequestHandler::readRequest(int clientSocket, std::vector<char>& clientBuffer) {
     ssize_t bytesRead = read(clientSocket, this->defaultBuffer, sizeof(this->defaultBuffer) - 1);
     if (bytesRead < 0) {
         std::cerr << "Error reading request" << std::endl;
@@ -35,9 +20,6 @@ void HttpRequestHandler::readRequest(int clientSocket, std::vector<char>& client
         std::cerr << "Client disconnected" << std::endl;
         throw std::runtime_error("Could not read from file descriptor");
     } else {
-        std::cout << __func__ << ": Bytes read: " << bytesRead<< std::endl;
-        std::cout << __func__ << ": BufferSize: " << bufferSize << std::endl;
-
         this->defaultBuffer[bytesRead] = 0;
         clientBuffer.insert(clientBuffer.end(), this->defaultBuffer, this->defaultBuffer + bytesRead);
 
@@ -50,7 +32,6 @@ void HttpRequestHandler::parseRequest(std::vector<char>& clientBuffer, int defau
     // Delimits the end of the request
     clientBuffer.push_back(0);
     this->requestLen = clientBuffer.size();
-
 
     // Validates Request size
     this->validateRequest(clientBuffer.data(), defaultBufferHeaderSize, clientMaxBodySize);
@@ -83,7 +64,7 @@ const std::vector<char>& HttpRequestHandler::getBody(void) const {
     return this->body;
 }
 
-void HttpRequestHandler::validateRequest(char *buffer, int defaultBufferHeaderSize, int clientMaxBodySize) {
+void HttpRequestHandler::validateRequest(char *buffer, int defaultBufferHeaderSize, size_t clientMaxBodySize) {
     // Splits the request blocks (header and body)
     std::vector<std::string> blocks = this->tokenize(buffer, HEADER_AND_BODY_DELIMITER);
 
@@ -94,7 +75,7 @@ void HttpRequestHandler::validateRequest(char *buffer, int defaultBufferHeaderSi
 
     if ((int)blocks[0].size() > defaultBufferHeaderSize) {
         std::cerr << "Header too large" << std::endl;
-        throw BadRequestException();
+        throw RequestHeaderFieldsTooLargeException();
     }
 
     // Validates if there is a body
@@ -102,14 +83,10 @@ void HttpRequestHandler::validateRequest(char *buffer, int defaultBufferHeaderSi
         return;
     }
 
-    std::string body;
-    size_t i = 1;
+    size_t bodyBegin = blocks[0].length() + HEADER_AND_BODY_DELIMITER_LEN;
+    this->bodyLen = this->requestLen - bodyBegin;
 
-    do {
-        body.append(blocks[i]);
-    } while (++i < blocks.size());
-
-    if ((int)body.size() > clientMaxBodySize) {
+    if (this->bodyLen > clientMaxBodySize) {
         std::cerr << "Body too large" << std::endl;
         throw PayloadTooLargeException();
     }
@@ -185,32 +162,37 @@ void HttpRequestHandler::parseRequestBody(char* buffer) {
     }
 
     size_t bodyBegin = tokens[0].length() + HEADER_AND_BODY_DELIMITER_LEN;
-    char *body = buffer + bodyBegin;
+    char *_body = buffer + bodyBegin;
 
     if (this->getHeader("Transfer-Encoding") == std::string("chunked")) {
-        this->setChunkedRequest(body);
+        this->setChunkedRequest(_body);
         return;
     }
 
-    this->body = std::vector<char>(body, buffer + this->requestLen + 1);
+    this->body = std::vector<char>(_body, buffer + this->requestLen + 1);
 }
 
-void HttpRequestHandler::setChunkedRequest(std::string chunkedBody) {
-    std::string body;
+void HttpRequestHandler::setChunkedRequest(char* chunkedBody) {
     size_t pos = 0;
-    char contentLength[20];
+    char* endPtr;
 
-    while (pos < chunkedBody.size()) {
+    this->body.clear();
+    while (pos < this->bodyLen) {
         // Finds the position of the CRLF (END_OF_LINE_DELIMITER)
-        size_t crlfPos = chunkedBody.find(END_OF_LINE_DELIMITER, pos);
-        if (crlfPos == std::string::npos) {
+        size_t crlfPos = this->_find(chunkedBody, pos, this->bodyLen, END_OF_LINE_DELIMITER);
+        if (crlfPos == std::size_t(-1)) {
             // Invalid format
             break;
         }
 
         // Extract the chunk size // 16 is used to define the base of the chunk length
-        std::string chunkSizeStr = chunkedBody.substr(pos, crlfPos - pos);
-        long chunkSize = strtol(chunkSizeStr.c_str(), NULL, 16);
+//        std::string chunkSizeStr = chunkedBody.substr(pos, crlfPos - pos);
+        long chunkSize = strtol(chunkedBody + pos, &endPtr, 16);
+
+        std::cout << "@chunk size: " << chunkSize << std::endl
+         << "@bodyLen: " << this->bodyLen << std::endl;
+
+
 
         if (chunkSize == 0) {
             // End of chunked data
@@ -218,22 +200,18 @@ void HttpRequestHandler::setChunkedRequest(std::string chunkedBody) {
         }
 
         // Move the position past the current CRLF
-        pos = crlfPos + strlen(END_OF_LINE_DELIMITER);
+//        pos = crlfPos + strlen(END_OF_LINE_DELIMITER);
 
         // Append the chunk data to the result
-        body += chunkedBody.substr(pos, chunkSize);
+        this->body.insert(this->body.end(), endPtr + strlen(END_OF_LINE_DELIMITER), chunkedBody + pos + chunkSize);
 
         // Move the position past the chunk data and CRLF
         pos += chunkSize + strlen(END_OF_LINE_DELIMITER);
     }
 
-    std::sprintf(contentLength, "%ld", body.size());
-
-    this->request["Body"] = body;
-    this->request["Content-Length"] = std::string(contentLength);
-
-    // std::cout << "********** BODY **********" << std::endl;
-    // std::cout <<  this->request["Body"] << std::endl;
+    this->body.push_back(0);
+    std::cout << "********** BODY **********" << std::endl;
+    std::cout << this->body.data() << std::endl;
 }
 
 std::vector<std::string> HttpRequestHandler::tokenize(const char* s, const char* delim) {
@@ -333,4 +311,29 @@ char HttpRequestHandler::_decodePercentEncoded(const char* hexDigits) {
 int HttpRequestHandler::_hex2int(char c) {
     return isdigit(c) ? (c - '0') : (tolower(c) - 'a' + 10);
 }
+
+std::size_t HttpRequestHandler::_find(const char *buffer, std::size_t pos, std::size_t bufferLen, const char *delim) {
+    while (pos < bufferLen) {
+        if (buffer[pos] == delim[0]) {
+            std::size_t i = 0;
+
+            while (pos + i < bufferLen && delim[i] != '\0' && buffer[pos + i] == delim[i]) {
+                ++i;
+            }
+            if (delim[i] == '\0') {
+                return pos;
+            }
+        }
+        ++pos;
+    }
+    return std::size_t(-1);
+}
+
+
+
+
+
+
+
+
 
