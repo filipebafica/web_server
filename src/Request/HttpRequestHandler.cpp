@@ -186,13 +186,7 @@ void HttpRequestHandler::setChunkedRequest(char* chunkedBody) {
         }
 
         // Extract the chunk size // 16 is used to define the base of the chunk length
-//        std::string chunkSizeStr = chunkedBody.substr(pos, crlfPos - pos);
         long chunkSize = strtol(chunkedBody + pos, &endPtr, 16);
-
-        std::cout << "@chunk size: " << chunkSize << std::endl
-         << "@bodyLen: " << this->bodyLen << std::endl;
-
-
 
         if (chunkSize == 0) {
             // End of chunked data
@@ -200,10 +194,11 @@ void HttpRequestHandler::setChunkedRequest(char* chunkedBody) {
         }
 
         // Move the position past the current CRLF
-//        pos = crlfPos + strlen(END_OF_LINE_DELIMITER);
+        pos = crlfPos + strlen(END_OF_LINE_DELIMITER);
 
         // Append the chunk data to the result
-        this->body.insert(this->body.end(), endPtr + strlen(END_OF_LINE_DELIMITER), chunkedBody + pos + chunkSize);
+        this->body.insert(this->body.end(), endPtr, chunkedBody + pos + chunkSize);
+
 
         // Move the position past the chunk data and CRLF
         pos += chunkSize + strlen(END_OF_LINE_DELIMITER);
