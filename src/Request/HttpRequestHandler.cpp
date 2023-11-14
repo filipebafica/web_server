@@ -24,6 +24,7 @@ void HttpRequestHandler::readRequest(int clientSocket, std::vector<char>& client
         clientBuffer.insert(clientBuffer.end(), this->defaultBuffer, this->defaultBuffer + bytesRead);
 
         std::cout << "********** REQUEST **********" << std::endl;
+        std::cout << "bytes read: " << bytesRead << std::endl;
         std::cout << this->defaultBuffer << std::endl;
     }
 }
@@ -47,6 +48,7 @@ void HttpRequestHandler::parseRequest(std::vector<char>& clientBuffer, int defau
 
     // Parses the Request-Body
     this->parseRequestBody(clientBuffer.data());
+
 }
 
 const std::map<std::string, std::string>& HttpRequestHandler::getRequest() const {
@@ -145,6 +147,7 @@ void HttpRequestHandler::parseRequestHeader(char* buffer) {
         std::vector<std::string> tokens = this->tokenize((char*)line.c_str(), COLONS_DELIMITER);
         if (tokens.size() == REQUEST_HEADER_PAIR_SIZE) {
             this->request[tokens[0]] = tokens[1];
+//            std::cout << this->request[tokens[0]] << ": " << tokens[1] << std::endl;
         }
     }
 }
@@ -154,6 +157,7 @@ void HttpRequestHandler::parseRequestBody(char* buffer) {
 
     this->body.clear();
     // Splits the request blocks (header and body)
+
     std::vector<std::string> tokens = this->tokenize(buffer, HEADER_AND_BODY_DELIMITER);
 
     // Validates if there is a body
@@ -169,7 +173,10 @@ void HttpRequestHandler::parseRequestBody(char* buffer) {
         return;
     }
 
-    this->body = std::vector<char>(_body, buffer + this->requestLen + 1);
+//    this->body = std::vector<char>(_body, buffer + this->requestLen + 1);
+    this->body = std::vector<char>(_body, _body + this->bodyLen);
+    std::cout << "********** BODY **********" << std::endl;
+//    std::cout << this->body.data() << std::endl;
 }
 
 void HttpRequestHandler::setChunkedRequest(char* chunkedBody) {
@@ -206,7 +213,7 @@ void HttpRequestHandler::setChunkedRequest(char* chunkedBody) {
 
     this->body.push_back(0);
     std::cout << "********** BODY **********" << std::endl;
-    std::cout << this->body.data() << std::endl;
+//    std::cout << this->body.data() << std::endl;
 }
 
 std::vector<std::string> HttpRequestHandler::tokenize(const char* s, const char* delim) {

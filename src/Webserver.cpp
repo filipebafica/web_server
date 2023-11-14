@@ -1,5 +1,7 @@
 #include <Webserver.hpp>
 
+#define LIST_DIR_SCRIPT "./static/listDir.php"
+
 Webserver::Webserver(
         IServerConfig* serverConfig,
         IHttpRequestHandler* httpRequestHandler,
@@ -232,7 +234,7 @@ void Webserver::handleGET(
                 contentType,
                 // this->httpRequestHandler->getHeader("Body"),
                 this->httpRequestHandler->getBody(),
-                "/home/vlima-nu/42/web_server/static/listDir.php"
+                LIST_DIR_SCRIPT
         );
 
         CGIResponse* cgiResponse = this->cgi->execute(cgiReq);
