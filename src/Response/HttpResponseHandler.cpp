@@ -42,5 +42,14 @@ void HttpResponseHandler::send(int socket,
 
 
     // Sends the HTTP headers
-    write(socket, response.str().c_str(), response.str().size());
+    ssize_t bytesWritten = write(socket, response.str().c_str(), response.str().size());
+
+    if (bytesWritten < 0) {
+        throw std::runtime_error("Could not write in file descriptor, some error occured");
+    }
+
+    if (bytesWritten == 0) {
+        throw std::runtime_error("Could not write in file descriptor, connection closed");
+    }
+
 }
