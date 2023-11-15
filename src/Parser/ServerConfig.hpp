@@ -52,6 +52,7 @@ private:
     std::string _getIndexFilePath(std::string path, std::vector<std::string> fileNames);
     Resources   _getResourcePathFromFile(int locationPosition, std::string locationRoot, std::string requestedRoute);
     std::string _getFileFromRoute(std::string requestedRoute);
+    std::string _parseMimeType(std::string fileName);
 
     int _selectLocationPosition(std::string route);
 

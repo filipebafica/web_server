@@ -166,14 +166,15 @@ Resources ServerConfig::_getResourcePathFromDirectory(int locationPosition, std:
 
     try {
         std::string filePath = this->_getIndexFilePath(fullPath, fileNames);
-        Resources resources(filePath, false);
+        std::string mimeType = this->_parseMimeType(filePath);
+        Resources resources(filePath, false, mimeType);
         return resources;
     } catch (RouteNotFoundException &exception) {
         if (!this->_isAutoIndexOn(locationPosition)) {
             throw RouteNotFoundException();
         }
     }
-    Resources resources(fullPath, true);
+    Resources resources(fullPath, true, "");
     return resources;
 }
 
@@ -211,7 +212,9 @@ Resources ServerConfig::_getResourcePathFromFile(int locationPosition, std::stri
     {
         throw RouteNotFoundException();
     }
-    Resources resources(fileName, false);
+
+    std::string mimeType = this->_parseMimeType(filePath);
+    Resources resources(fileName, false, mimeType);
     return resources;
 }
 
@@ -269,4 +272,43 @@ bool ServerConfig::_isAutoIndexOn(int locationPosition)
     } else {
         return false;
     }
+}
+
+std::string ServerConfig::_parseMimeType(std::string fileName)
+{
+    std::string mimeType;
+
+    std::map<std::string, std::string> mimeTypes;
+    mimeTypes[".gif"]   = "image/gif";
+    mimeTypes[".htm"]   = "text/html";
+    mimeTypes[".html"]  = "text/html";
+    mimeTypes[".jpeg"]  = "image/jpeg";
+    mimeTypes[".jpg"]   = "image/jpeg";
+    mimeTypes[".mp3"]   = "audio/mpeg";
+    mimeTypes[".mpeg"]  = "video/mpeg";
+    mimeTypes[".mp4"]   = "video/mp4";
+    mimeTypes[".pdf"]   = "application/pdf";
+    mimeTypes[".png"]   = "image/png";
+    mimeTypes[".php"]   = "application/x-httpd-php";
+    mimeTypes[".rar"]   = "application/vnd.rar";
+    mimeTypes[".svg"]   = "image/svg+xml";
+    mimeTypes[".tar"]   = "application/x-tar";
+    mimeTypes[".txt"]   = "text/plain";
+    mimeTypes[".wav"]   = "audio/wav";
+    mimeTypes[".xhtml"] = "application/xhtml+xml";
+    mimeTypes[".xml"]   = "application/xml";
+    mimeTypes[".zip"]   = "application/zip";
+
+    size_t dotIndex = fileName.find_last_of('.');
+    if (dotIndex == std::string::npos) {
+        return mimeTypes[".txt"];
+    }
+    std::string extension = fileName.substr(dotIndex);
+
+    std::map<std::string, std::string>::iterator it = mimeTypes.find(extension);
+    if (it == mimeTypes.end()) {
+        return mimeTypes[".txt"];
+    }
+
+    return mimeTypes[it->first];
 }
