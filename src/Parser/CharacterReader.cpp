@@ -5,7 +5,6 @@ CharacterReader::CharacterReader(const char *filePath) : _position(0)
     _inputFile.open(filePath);
     if (!_inputFile.is_open())
     {
-        std::cerr << "Error: Could not open file " << filePath << std::endl;
         throw std::runtime_error("Error: Could not open file");
     }
 

@@ -32,7 +32,6 @@ char* const* CGIEnvironment::data(void) {
 
         return this->_saveEnvPtr;
     } catch (const std::bad_alloc& e) {
-        std::cerr << ": Memory allocation failed: " << e.what() << std::endl;
         return NULL;
     }
 }
