@@ -260,7 +260,7 @@ void Webserver::handleGET(
                 "", // TODO: Parsear reasonPhrase do CGI
                 cgiResponse->getCGIHeaders(),
                 cgiResponse->getCGIBody(),
-                0
+                strlen(cgiResponse->getCGIBody())
         );
         delete cgiResponse;
         return;
@@ -287,7 +287,7 @@ void Webserver::handleGET(
                 "", // TODO: Parsear reasonPhrase do CGI
                 cgiResponse->getCGIHeaders(),
                 cgiResponse->getCGIBody(),
-                0
+                strlen(cgiResponse->getCGIBody())
         );
         delete cgiResponse;
 
@@ -300,7 +300,7 @@ void Webserver::handleGET(
             clientSocket,
             200,
             "OK",
-            "Content-Type: image/jpeg",
+            "Content-Type: text/html",
             content.data(),
             content.size()
     );
@@ -314,13 +314,15 @@ void Webserver::handlePOST(
     ) {
 
     if (contentType.find("multipart/form-data") == std::string::npos) {
+        std::string content = "Success";
+
         this->responseWriter(
                 clientSocket,
                 200,
                 "OK",
                 "Content-Type:text/plain",
-                "success",
-                8
+                content.c_str(),
+                content.size()
         );
         return;
     }
@@ -344,8 +346,8 @@ void Webserver::handlePOST(
             cgiResponse->getCGIStatus(),
             "", // TODO: Parsear reasonPhrase do CGI
             cgiResponse->getCGIHeaders(),
-            "file was uploaded successfully",
-            31
+            cgiResponse->getCGIBody(),
+            strlen(cgiResponse->getCGIBody())
     );
     delete cgiResponse;
 }
@@ -355,20 +357,22 @@ void Webserver::handleDELETE(int clientSocket, const Resources& resources) {
         throw BadRequestException();
     }
     if (remove(resources.path.c_str()) == 0) {
+        std::string content = "DELETE has been made";
+
         this->responseWriter(
                 clientSocket,
                 200,
                 "OK",
                 "Content-Type:text/plain",
-                "DELETE has been made",
-                21
+                content.c_str(),
+                content.size()
         );
     } else {
         this->responseWriter(
                 clientSocket,
                 500,
                 "Internal Server Error",
-                "Content-Type:text/plain",
+                "Content-Type:image/plain",
                 "",
                 0
         );
