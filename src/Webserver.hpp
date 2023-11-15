@@ -23,7 +23,7 @@
 class Webserver {
  private:
     std::vector<int> serverSockets;
-    std::vector<struct sockaddr_in*> serverAddresses;
+    std::vector<struct sockaddr_in> serverAddresses;
     bool allowResponse;
     int defaultBufferHeaderSize;
     int clientMaxBodySize;

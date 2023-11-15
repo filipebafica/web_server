@@ -18,7 +18,6 @@ void Monitor::loop(void) {
         this->updatePollFdsVectorWithClientSockets();
 
         if (this->pollEvents() == -1) {
-            std::cerr << "Error in poll" << std::endl;
             continue;
         }
 
@@ -68,8 +67,6 @@ void Monitor::loop(void) {
                 webserver->setAllowResponse(false);
                 this->clean(clientSocket);
             } catch (std::exception& exception) {
-                std::cout << exception.what() << std::endl;
-
                 webserver->responseWriter(
                         clientSocket,
                         500,
@@ -164,7 +161,6 @@ void Monitor::updateClientSocketsVector(int serverSocket) {
     );
 
     if (clientSocket < 0) {
-        std::cerr << "Error accepting connection" << std::endl;
         return;
     }
 

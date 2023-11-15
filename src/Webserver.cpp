@@ -27,9 +27,6 @@ Webserver::Webserver(
 }
 
 Webserver::~Webserver() {
-    for (size_t i = 0; i < this->serverAddresses.size(); i++) {
-        delete this->serverAddresses[i];
-    }
     /* Closing socket descriptors */
     for (size_t i = 0; i < this->serverSockets.size(); i++) {
         close(this->serverSockets[i]);
@@ -65,8 +62,7 @@ void Webserver::createSocket(void) {
          * error when binding the socket to the server address. */
         setsockopt(socketDescriptor, SOL_SOCKET, SO_REUSEADDR, &option, sizeof(option));
         if (socketDescriptor < 0) {
-            std::cerr << "Error creating socket" << std::endl;
-            exit(1);
+            throw std::runtime_error("Error creating server socket");
         }
         this->serverSockets.push_back(socketDescriptor);
     }
@@ -94,11 +90,11 @@ void Webserver::setupAddress(void) {
     */
     std::vector<int> ports = this->serverConfig->getListeningPorts();
     for (size_t i = 0; i < ports.size() ; ++i) {
-        struct sockaddr_in* address = new struct sockaddr_in;
+        struct sockaddr_in address;
 
-        address->sin_family = AF_INET;
-        address->sin_port = htons(ports[i]);
-        address->sin_addr.s_addr = INADDR_ANY;
+        address.sin_family = AF_INET;
+        address.sin_port = htons(ports[i]);
+        address.sin_addr.s_addr = INADDR_ANY;
 
         this->serverAddresses.push_back(address);
     }
@@ -115,13 +111,12 @@ void Webserver::bindServerSocket(void) {
     for (size_t i = 0; i < this->serverSockets.size(); ++i) {
         int bindToSocket = bind(
                 this->serverSockets[i],
-                (struct sockaddr*)this->serverAddresses[i],
-                sizeof(*this->serverAddresses[i])
+                (struct sockaddr*)&this->serverAddresses[i],
+                sizeof(this->serverAddresses[i])
         );
 
         if (bindToSocket < 0) {
-            std::cerr << "Error binding socket" << std::endl;
-            exit(1);
+            throw std::runtime_error("Error binding server socket");
         }
     }
 }
