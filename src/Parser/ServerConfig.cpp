@@ -213,7 +213,7 @@ Resources ServerConfig::_getResourcePathFromFile(int locationPosition, std::stri
         throw RouteNotFoundException();
     }
 
-    std::string mimeType = this->_parseMimeType(filePath);
+    std::string mimeType = this->_parseMimeType(fileName);
     Resources resources(fileName, false, mimeType);
     return resources;
 }

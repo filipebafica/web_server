@@ -296,11 +296,14 @@ void Webserver::handleGET(
 
     std::vector<char> content = this->getContent(resources.path);
 
+    std::string responseType = "Content-Type: ";
+    responseType += resources.mimeType;
+
     this->responseWriter(
             clientSocket,
             200,
             "OK",
-            "Content-Type: text/html",
+            responseType.c_str(),
             content.data(),
             content.size()
     );
