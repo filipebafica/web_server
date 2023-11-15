@@ -1,8 +1,5 @@
 <?php
 
-print_r($_FILES);
-print_r($_SERVER);
-
 if (isset($_FILES["file"]) == false) {
     echo "Nenhum arquivo foi enviado";
     return;
