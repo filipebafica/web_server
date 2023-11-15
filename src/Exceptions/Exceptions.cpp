@@ -1,5 +1,6 @@
 #include <Exceptions.hpp>
 
+
 ServerResponseException::ServerResponseException(int status, const char* reasonPhrase)
     : _status(status), _reasonPhrase(reasonPhrase) {}
 

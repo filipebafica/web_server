@@ -14,7 +14,8 @@ class HttpResponseHandler : public IHttpResponseHandler {
               int statusCode,
               const char* reasonPhrase,
               const char* headers,
-              const char* content) const;
+              const char* content,
+              size_t contentLength) const;
 };
 
 #endif  /* SRC_RESPONSE_HTTPRESPONSEHANDLER_HPP_ */

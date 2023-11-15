@@ -8,7 +8,8 @@ public:
             int statusCode,
             const char* reasonPhrase,
             const char* headers,
-            const char* content
+            const char* content,
+            size_t contentLength
     ) const = 0;
     virtual ~IHttpResponseHandler() {};
 };

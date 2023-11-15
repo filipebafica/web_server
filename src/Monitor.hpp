@@ -9,6 +9,7 @@
 #include <vector>
 
 #include <Webserver.hpp>
+#include <Exceptions.hpp>
 
 class Monitor {
  private:

@@ -59,13 +59,13 @@ class Webserver {
     bool isResponseAllowed(void) const;
     void setAllowResponse(bool isResponseAllowed);
     const std::map<std::string, std::string>& getRequest(void) const;
-    void responseWriter(int socket, int statusCode, const char* reasonPhrase, const char* headers = "", const char* content = "");
+    void responseWriter(int socket, int statusCode, const char* reasonPhrase, const char* headers, const char* content, size_t contentLength);
     void updateClientBuffers(int clientSocket);
     void send(int clientSocket);
     void handleGET(int clientSocket, std::string& method, std::string& route, std::string& contentType, const Resources& resources);
     void handlePOST(int clientSocket, std::string& method, std::string& route, std::string& contentType);
     void handleDELETE(int clientSocket, const Resources& resources);
-    std::string getContent(std::string path) const;
+    std::vector<char> getContent(std::string path) const;
     std::string getDirectoryFiles(std::string path) const;
 };
 

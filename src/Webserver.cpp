@@ -2,6 +2,8 @@
 
 #define LIST_DIR_SCRIPT "./static/listDir.php"
 
+size_t resourceContentLength;
+
 Webserver::Webserver(
         IServerConfig* serverConfig,
         IHttpRequestHandler* httpRequestHandler,
@@ -178,8 +180,22 @@ const std::map<std::string, std::string>& Webserver::getRequest() const {
     return this->httpRequestHandler->getRequest();
 }
 
-void Webserver::responseWriter(int socket, int statusCode, const char* reasonPhrase, const char *headers, const char *content) {
-    this->httpResponseHandler->send(socket, statusCode, reasonPhrase, headers, content);
+void Webserver::responseWriter(
+        int socket,
+        int statusCode,
+        const char* reasonPhrase,
+        const char *headers,
+        const char* content,
+        size_t contentLength
+) {
+    this->httpResponseHandler->send(
+            socket,
+            statusCode,
+            reasonPhrase,
+            headers,
+            content,
+            contentLength
+    );
 
     this->clientBuffers.erase(socket);
 }
@@ -232,7 +248,6 @@ void Webserver::handleGET(
                 this->httpRequestHandler->getHeader("QueryString"),
                 this->httpRequestHandler->getHeader("Content-Length"),
                 contentType,
-                // this->httpRequestHandler->getHeader("Body"),
                 this->httpRequestHandler->getBody(),
                 LIST_DIR_SCRIPT
         );
@@ -244,7 +259,8 @@ void Webserver::handleGET(
                 403,
                 "", // TODO: Parsear reasonPhrase do CGI
                 cgiResponse->getCGIHeaders(),
-                cgiResponse->getCGIBody()
+                cgiResponse->getCGIBody(),
+                0
         );
         delete cgiResponse;
         return;
@@ -260,7 +276,6 @@ void Webserver::handleGET(
                 this->httpRequestHandler->getHeader("QueryString"),
                 this->httpRequestHandler->getHeader("Content-Length"),
                 contentType,
-                // this->httpRequestHandler->getHeader("Body")
                 this->httpRequestHandler->getBody()
         );
 
@@ -271,19 +286,23 @@ void Webserver::handleGET(
                 cgiResponse->getCGIStatus(),
                 "", // TODO: Parsear reasonPhrase do CGI
                 cgiResponse->getCGIHeaders(),
-                cgiResponse->getCGIBody()
+                cgiResponse->getCGIBody(),
+                0
         );
         delete cgiResponse;
 
         return;
     }
 
+    std::vector<char> content = this->getContent(resources.path);
+
     this->responseWriter(
             clientSocket,
             200,
             "OK",
-            "Content-Type:text/html",
-            this->getContent(resources.path).c_str()
+            "Content-Type: image/jpeg",
+            content.data(),
+            content.size()
     );
 }
 
@@ -300,7 +319,8 @@ void Webserver::handlePOST(
                 200,
                 "OK",
                 "Content-Type:text/plain",
-                "success"
+                "success",
+                8
         );
         return;
     }
@@ -314,7 +334,6 @@ void Webserver::handlePOST(
             this->httpRequestHandler->getHeader("QueryString"),
             this->httpRequestHandler->getHeader("Content-Length"),
             contentType,
-            // this->httpRequestHandler->getHeader("Body")
             this->httpRequestHandler->getBody()
     );
 
@@ -325,7 +344,8 @@ void Webserver::handlePOST(
             cgiResponse->getCGIStatus(),
             "", // TODO: Parsear reasonPhrase do CGI
             cgiResponse->getCGIHeaders(),
-            "file was uploaded successfully"
+            "file was uploaded successfully",
+            31
     );
     delete cgiResponse;
 }
@@ -340,7 +360,8 @@ void Webserver::handleDELETE(int clientSocket, const Resources& resources) {
                 200,
                 "OK",
                 "Content-Type:text/plain",
-                "DELETE has been made"
+                "DELETE has been made",
+                21
         );
     } else {
         this->responseWriter(
@@ -348,19 +369,34 @@ void Webserver::handleDELETE(int clientSocket, const Resources& resources) {
                 500,
                 "Internal Server Error",
                 "Content-Type:text/plain",
-                ""
+                "",
+                0
         );
     }
 }
 
-std::string Webserver::getContent(std::string path) const {
+//std::string Webserver::getContent(std::string path) const {
+//    std::ifstream file;
+//    std::string content;
+//    std::string line;
+//
+//    file.open(path.c_str(), std::ios::binary);
+//    while (std::getline(file, line)) {
+//        content += line;
+//    }
+//    file.close();
+//
+//    return content;
+//}
+
+std::vector<char> Webserver::getContent(std::string path) const {
     std::ifstream file;
-    std::string content;
-    std::string line;
+    std::vector<char> content;
+    char byte;
 
     file.open(path.c_str(), std::ios::binary);
-    while (std::getline(file, line)) {
-        content += line;
+    while (file.get(byte)) {
+        content.push_back(byte);
     }
     file.close();
 

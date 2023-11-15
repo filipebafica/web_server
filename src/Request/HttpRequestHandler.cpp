@@ -333,7 +333,9 @@ std::size_t HttpRequestHandler::_find(const char *buffer, std::size_t pos, std::
 
 
 
-
+// descobrir o tipo do recurso
+// cgi retornar o content length da response dele
+// verificar o delete
 
 
 
