@@ -15,10 +15,10 @@ void HttpRequestHandler::readRequest(int clientSocket, std::vector<char>& client
     ssize_t bytesRead = read(clientSocket, this->defaultBuffer, sizeof(this->defaultBuffer) - 1);
     if (bytesRead < 0) {
         std::cerr << "Error reading request" << std::endl;
-        throw std::runtime_error("Could not read from file descriptor");
+        throw std::runtime_error("Could not read from file descriptor, some error occured");
     } else if (bytesRead == 0) {
         std::cerr << "Client disconnected" << std::endl;
-        throw std::runtime_error("Could not read from file descriptor");
+        throw std::runtime_error("Could not read from file descriptor, connection closed");
     } else {
         this->defaultBuffer[bytesRead] = 0;
         clientBuffer.insert(clientBuffer.end(), this->defaultBuffer, this->defaultBuffer + bytesRead);
@@ -242,13 +242,7 @@ void HttpRequestHandler::parseURI(void) {
     const std::string& uriWithoutQuery  = requestURI.substr(0, queryStart);
     const std::string& decodedURI       = _decodeURI(uriWithoutQuery);
 
-    this->request["DecodedURI"] = decodedURI;
-
-    // std::size_t lastURIBar  = decodedURI.find_last_of('/');
-
-    // this->request["Route"]  = decodedURI.substr(0, lastURIBar);
-    // this->request["File"]   = decodedURI.substr(lastURIBar + 1);
-
+    this->request["Route"]  = decodedURI;
     this->request["isPHP"]  = _checkCGIExtension(decodedURI);
 
     if (queryStart != std::string::npos) {

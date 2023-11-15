@@ -27,7 +27,6 @@ class Webserver {
     bool allowResponse;
     int defaultBufferHeaderSize;
     int clientMaxBodySize;
-    int bufferSize;
     std::map<int, std::vector<char> > clientBuffers;
 
  public:
