@@ -12,13 +12,12 @@
 #define HEADER_AND_BODY_DELIMITER_LEN 4
 
 void HttpRequestHandler::readRequest(int clientSocket, std::vector<char>& clientBuffer) {
-    ssize_t bytesRead = read(clientSocket, this->defaultBuffer, sizeof(this->defaultBuffer) - 1);
+    ssize_t bytesRead = read(clientSocket, this->defaultBuffer, sizeof(this->defaultBuffer));
     if (bytesRead < 0) {
         throw std::runtime_error("Could not read from file descriptor, some error occured");
     } else if (bytesRead == 0) {
         throw std::runtime_error("Could not read from file descriptor, connection closed");
     } else {
-        this->defaultBuffer[bytesRead] = 0;
         clientBuffer.insert(clientBuffer.end(), this->defaultBuffer, this->defaultBuffer + bytesRead);
     }
 }
@@ -81,7 +80,7 @@ void HttpRequestHandler::validateRequest(char *buffer, int defaultBufferHeaderSi
     size_t bodyBegin = blocks[0].length() + HEADER_AND_BODY_DELIMITER_LEN;
     this->bodyLen = this->requestLen - bodyBegin;
 
-    if (this->bodyLen > clientMaxBodySize) {
+    if (this->bodyLen > clientMaxBodySize + 1) {
         throw PayloadTooLargeException();
     }
 }

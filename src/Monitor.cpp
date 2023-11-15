@@ -61,8 +61,7 @@ void Monitor::loop(void) {
                         serverException.getStatus(),
                         serverException.getReasonPhrase(),
                         "content-type:text/html",
-                        content.data(),
-                        content.size()
+                        content
                 );
                 webserver->setAllowResponse(false);
                 this->clean(clientSocket);
@@ -72,8 +71,7 @@ void Monitor::loop(void) {
                         500,
                         "Internal Server Error",
                         "content-type:text",
-                        "Internal Server Error",
-                        22
+                        "Internal Server Error"
                 );
                 webserver->setAllowResponse(false);
                 this->clean(clientSocket);

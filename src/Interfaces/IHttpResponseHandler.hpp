@@ -1,6 +1,8 @@
 #ifndef I_HTTP_RESPONSE_HANDLER_
 #define I_HTTP_RESPONSE_HANDLER_
 
+#include <vector>
+
 class IHttpResponseHandler {
 public:
     virtual void send(
@@ -8,8 +10,15 @@ public:
             int statusCode,
             const char* reasonPhrase,
             const char* headers,
-            const char* content,
-            size_t contentLength
+            std::vector<char>& binaryContent
+    ) const = 0;
+
+    virtual void send(
+            int socket,
+            int statusCode,
+            const char* reasonPhrase,
+            const char* headers,
+            const char* content
     ) const = 0;
     virtual ~IHttpResponseHandler() {};
 };

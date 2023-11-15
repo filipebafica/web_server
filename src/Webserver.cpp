@@ -178,16 +178,32 @@ void Webserver::responseWriter(
         int statusCode,
         const char* reasonPhrase,
         const char *headers,
-        const char* content,
-        size_t contentLength
+        std::vector<char> content
 ) {
     this->httpResponseHandler->send(
             socket,
             statusCode,
             reasonPhrase,
             headers,
-            content,
-            contentLength
+            content
+    );
+
+    this->clientBuffers.erase(socket);
+}
+
+void Webserver::responseWriter(
+        int socket,
+        int statusCode,
+        const char* reasonPhrase,
+        const char *headers,
+        const char* content
+) {
+    this->httpResponseHandler->send(
+            socket,
+            statusCode,
+            reasonPhrase,
+            headers,
+            content
     );
 
     this->clientBuffers.erase(socket);
@@ -252,8 +268,7 @@ void Webserver::handleGET(
                 403,
                 "", // TODO: Parsear reasonPhrase do CGI
                 cgiResponse->getCGIHeaders(),
-                cgiResponse->getCGIBody(),
-                strlen(cgiResponse->getCGIBody())
+                cgiResponse->getCGIBody()
         );
         delete cgiResponse;
         return;
@@ -279,8 +294,7 @@ void Webserver::handleGET(
                 cgiResponse->getCGIStatus(),
                 "", // TODO: Parsear reasonPhrase do CGI
                 cgiResponse->getCGIHeaders(),
-                cgiResponse->getCGIBody(),
-                strlen(cgiResponse->getCGIBody())
+                cgiResponse->getCGIBody()
         );
         delete cgiResponse;
 
@@ -297,8 +311,7 @@ void Webserver::handleGET(
             200,
             "OK",
             responseType.c_str(),
-            content.data(),
-            content.size()
+            content
     );
 }
 
@@ -310,15 +323,13 @@ void Webserver::handlePOST(
     ) {
 
     if (contentType.find("multipart/form-data") == std::string::npos) {
-        std::string content = "Success";
 
         this->responseWriter(
                 clientSocket,
                 200,
                 "OK",
                 "Content-Type:text/plain",
-                content.c_str(),
-                content.size()
+                "Success"
         );
         return;
     }
@@ -342,8 +353,7 @@ void Webserver::handlePOST(
             cgiResponse->getCGIStatus(),
             "", // TODO: Parsear reasonPhrase do CGI
             cgiResponse->getCGIHeaders(),
-            cgiResponse->getCGIBody(),
-            strlen(cgiResponse->getCGIBody())
+            cgiResponse->getCGIBody()
     );
     delete cgiResponse;
 }
@@ -353,15 +363,12 @@ void Webserver::handleDELETE(int clientSocket, const Resources& resources) {
         throw BadRequestException();
     }
     if (remove(resources.path.c_str()) == 0) {
-        std::string content = "DELETE has been made";
-
         this->responseWriter(
                 clientSocket,
                 200,
                 "OK",
                 "Content-Type:text/plain",
-                content.c_str(),
-                content.size()
+                "DELETE has been made"
         );
     } else {
         this->responseWriter(
@@ -369,8 +376,7 @@ void Webserver::handleDELETE(int clientSocket, const Resources& resources) {
                 500,
                 "Internal Server Error",
                 "Content-Type:image/plain",
-                "",
-                0
+                "Internal Server Error"
         );
     }
 }

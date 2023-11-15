@@ -5,6 +5,7 @@
 
 #include <iostream>
 #include <sstream>
+#include <vector>
 
 #include <IHttpResponseHandler.hpp>
 
@@ -14,8 +15,13 @@ class HttpResponseHandler : public IHttpResponseHandler {
               int statusCode,
               const char* reasonPhrase,
               const char* headers,
-              const char* content,
-              size_t contentLength) const;
+              std::vector<char>& binaryContent) const;
+
+    void send(int socket,
+              int statusCode,
+              const char* reasonPhrase,
+              const char* headers,
+              const char* content) const;
 };
 
 #endif  /* SRC_RESPONSE_HTTPRESPONSEHANDLER_HPP_ */

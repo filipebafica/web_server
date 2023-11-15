@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Up The Irons!</title>
+    <title>Hello, World!</title>
     <style>
         body {
             font-family: Arial, sans-serif;
@@ -21,7 +21,7 @@
 
         h1 {
             font-size: 82px;
-            color: #ff0000;
+            color: #575fff;
         }
 
         p {
@@ -35,10 +35,13 @@
         }
     </style>
 </head>
-<body>
-<div class="container">
-    <h1>Up The Irons!</h1>
-    <p>Scream for me Brazil!!!</p>
-</div>
-</body>
+    <body>
+        <h1>File Upload Form</h1>
+            <form action="postFile.php" method="post" enctype="multipart/form-data">
+                <label for="file">Choose a file:</label>
+                <input type="file" name="file" id="file" accept=".txt, .pdf, .jpg, .png" required>
+                <br><br>
+                <input type="submit" value="Upload File">
+            </form>
+    </body>
 </html>
