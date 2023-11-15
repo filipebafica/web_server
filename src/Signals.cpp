@@ -5,6 +5,7 @@ Signals::Signals(Monitor *monitor) {
     Signals::monitor = monitor;
     std::signal(SIGINT, Signals::handler);
     std::signal(SIGQUIT, Signals::handler);
+    std::signal(SIGPIPE, SIG_IGN);
 }
 
 Signals::~Signals() {}

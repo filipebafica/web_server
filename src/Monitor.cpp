@@ -68,6 +68,8 @@ void Monitor::loop(void) {
                 webserver->setAllowResponse(false);
                 this->clean(clientSocket);
             } catch (std::exception& exception) {
+                std::cout << exception.what() << std::endl;
+
                 webserver->responseWriter(
                         clientSocket,
                         500,

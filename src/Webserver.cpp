@@ -2,8 +2,6 @@
 
 #define LIST_DIR_SCRIPT "./static/listDir.php"
 
-size_t resourceContentLength;
-
 Webserver::Webserver(
         IServerConfig* serverConfig,
         IHttpRequestHandler* httpRequestHandler,
@@ -382,20 +380,6 @@ void Webserver::handleDELETE(int clientSocket, const Resources& resources) {
     }
 }
 
-//std::string Webserver::getContent(std::string path) const {
-//    std::ifstream file;
-//    std::string content;
-//    std::string line;
-//
-//    file.open(path.c_str(), std::ios::binary);
-//    while (std::getline(file, line)) {
-//        content += line;
-//    }
-//    file.close();
-//
-//    return content;
-//}
-
 std::vector<char> Webserver::getContent(std::string path) const {
     std::ifstream file;
     std::vector<char> content;
@@ -432,5 +416,3 @@ std::string Webserver::getDirectoryFiles(std::string path) const {
 
     return entries;
 }
-
-
