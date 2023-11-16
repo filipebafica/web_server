@@ -9,7 +9,6 @@ ServerConfig::ServerConfig() {
     this->_errorPages[502] = "./static/errorPages/502-Page.html";
 
     this->_host = "";
-    this->_return = "";
     this->_clientMaxBodySize = 1000000;
 }
 

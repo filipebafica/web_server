@@ -1,5 +1,9 @@
 #include <ServerLocation.hpp>
 
+ServerLocation::ServerLocation() {
+    this->_return = "";
+}
+
 void ServerLocation::setRoot(std::string root)
 {
     this->_root = root;

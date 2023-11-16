@@ -8,6 +8,7 @@
 class ServerLocation
 {
 public:
+    ServerLocation();
     std::vector<std::string> &getIndexes();
     std::string &getRoot();
     std::string &getAutoIndex();

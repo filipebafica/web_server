@@ -6,12 +6,12 @@
 class Resources
 {
 public:
-    Resources(const std::string path, const bool isDirectory, const std::string mimeType);
+    Resources(const std::string path, const bool isDirectory, const std::string mimeType, std::string redirection);
 
     const std::string   path;
     const bool          isDirectory;
     const std::string   mimeType;
-    std::string         redirection;
+    const std::string   redirection;
 };
 
 #endif // // RESOURCES_HPP_
