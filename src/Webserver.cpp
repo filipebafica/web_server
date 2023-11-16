@@ -274,6 +274,21 @@ void Webserver::handleGET(
         return;
     }
 
+    if (!resources.redirection.empty()) {
+        std::string location = "Location: ";
+        location += resources.redirection;
+
+        this->responseWriter(
+                clientSocket,
+                302,
+                "Found",
+                location.c_str(),
+                "Redirected"
+        );
+
+        return;
+    }
+
     if (this->httpRequestHandler->getHeader("isPHP") == std::string("Yes")) {
         CGIRequest cgiReq = CGIRequest(
                 method,
