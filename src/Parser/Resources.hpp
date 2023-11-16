@@ -11,6 +11,7 @@ public:
     const std::string   path;
     const bool          isDirectory;
     const std::string   mimeType;
+    std::string         redirection;
 };
 
 #endif // // RESOURCES_HPP_

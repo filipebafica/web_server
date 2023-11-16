@@ -14,7 +14,7 @@ public:
     std::string &getProxyPass();
     std::string &getAlias();
     std::vector<std::string> &getTryFiles();
-    std::map<int,std::string> &getReturn();
+    std::string &getReturn();
     std::vector<std::string> &getAllow();
     std::vector<std::string> &getDeny();
     std::string &getRoute();
@@ -26,7 +26,7 @@ public:
     void setProxyPass(std::string proxyPass);
     void setAlias(std::string alias);
     void setTryFiles(std::string tryFiles);
-    void setReturn(int code, std::string msg);
+    void setReturn(std::string url);
     void setAllow(std::string address);
     void setDeny(std::string address);
     void setRoute(std::string route);
@@ -41,7 +41,7 @@ private:
     std::vector<std::string> _deny;
     std::string _autoindex;
     std::string _defaultType;
-    std::map<int,std::string> _return;
+    std::string _return;
     std::string _limitExcept;
     std::string _cgi;
     std::string _proxyPass;

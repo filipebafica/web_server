@@ -507,26 +507,12 @@ void Parser::_parseReturnDirective()
         throw std::runtime_error("return parameter should not be empty");
     }
 
-    if (token.type != IDENTIFIER || !this->_isValidErrorCode(std::atoi(token.value.c_str())))
-    {
-        throw std::runtime_error("invalid return parameter");
-    }
-    int code = std::atoi(token.value.c_str());
+    this->_serverConfigs.back().getLocations().back().setReturn(token.value);
     this->_lexer.consume();
+
     token = this->_lexer.peek();
-
-    std::string msg;
-    if (token.type == SEMICOLON) {
-        msg = "";
-    } else {
-        msg = token.value;
-        this->_lexer.consume();
-        token = this->_lexer.peek();
-    }
-    this->_serverConfigs.back().getLocations().back().setReturn(code, msg);
-
     if (token.type != SEMICOLON) {
-        throw std::runtime_error("return directive should  be <error_code> <optional_msg>");
+        throw std::runtime_error("return directive should  be <error_code> <msg>");
     }
 
     this->_lexer.consume();

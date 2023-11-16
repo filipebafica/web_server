@@ -60,12 +60,12 @@ void ServerLocation::setTryFiles(std::string tryfile)
     this->_tryFiles.push_back(tryfile);
 }
 
-void ServerLocation::setReturn(int code, std::string msg)
+void ServerLocation::setReturn(std::string msg)
 {
-    this->_return[code] = msg;
+    this->_return = msg;
 }
 
-std::map<int,std::string> &ServerLocation::getReturn()
+std::string &ServerLocation::getReturn()
 {
     return this->_return;
 }

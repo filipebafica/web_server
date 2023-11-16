@@ -9,6 +9,7 @@ ServerConfig::ServerConfig() {
     this->_errorPages[502] = "./static/errorPages/502-Page.html";
 
     this->_host = "";
+    this->_return = "";
     this->_clientMaxBodySize = 1000000;
 }
 
@@ -86,7 +87,14 @@ Resources ServerConfig::getResources(std::string method, std::string route)
     {
         throw MethodNotAllowedException();
     }
- 
+
+    std::vector<ServerLocation> locations = this->getLocations();
+    std::string redirection = locations[locationPosition].getReturn();
+    if (redirection != "") {
+        Resources resources("", false, "", redirection);
+        return resources;
+    }
+
     return this->_getResourcePathFile(locationPosition, route);
 }
 
@@ -167,14 +175,14 @@ Resources ServerConfig::_getResourcePathFromDirectory(int locationPosition, std:
     try {
         std::string filePath = this->_getIndexFilePath(fullPath, fileNames);
         std::string mimeType = this->_parseMimeType(filePath);
-        Resources resources(filePath, false, mimeType);
+        Resources resources(filePath, false, mimeType, "");
         return resources;
     } catch (RouteNotFoundException &exception) {
         if (!this->_isAutoIndexOn(locationPosition)) {
             throw RouteNotFoundException();
         }
     }
-    Resources resources(fullPath, true, "");
+    Resources resources(fullPath, true, "", "");
     return resources;
 }
 
@@ -214,7 +222,7 @@ Resources ServerConfig::_getResourcePathFromFile(int locationPosition, std::stri
     }
 
     std::string mimeType = this->_parseMimeType(fileName);
-    Resources resources(fileName, false, mimeType);
+    Resources resources(fileName, false, mimeType, "");
     return resources;
 }
 
