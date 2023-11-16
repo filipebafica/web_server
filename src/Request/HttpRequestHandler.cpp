@@ -221,11 +221,11 @@ std::vector<std::string> HttpRequestHandler::tokenize(const char* s, const char*
 }
 
 void HttpRequestHandler::parseURI(void) {
-    const std::string& requestURI = this->request["Route"];
+    const std::string requestURI = this->request["Route"];
     size_t queryStart = requestURI.find('?');
 
-    const std::string& uriWithoutQuery  = requestURI.substr(0, queryStart);
-    const std::string& decodedURI       = _decodeURI(uriWithoutQuery);
+    const std::string uriWithoutQuery  = requestURI.substr(0, queryStart);
+    const std::string decodedURI       = _decodeURI(uriWithoutQuery);
 
     this->request["Route"]  = decodedURI;
     this->request["isPHP"]  = _checkCGIExtension(decodedURI);

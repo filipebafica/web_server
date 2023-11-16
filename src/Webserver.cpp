@@ -254,7 +254,7 @@ void Webserver::handleGET(
                 this->httpRequestHandler->getHeader("User-Agent"),
                 this->serverConfig->getRoot(method, route),
                 this->httpRequestHandler->getHeader("Route"),
-                this->httpRequestHandler->getHeader("QueryString"),
+                this->httpRequestHandler->getHeader("Querystring"),
                 this->httpRequestHandler->getHeader("Content-Length"),
                 contentType,
                 this->httpRequestHandler->getBody(),
@@ -281,7 +281,7 @@ void Webserver::handleGET(
                 this->httpRequestHandler->getHeader("User-Agent"),
                 this->serverConfig->getRoot(method, route),
                 this->httpRequestHandler->getHeader("Route"),
-                this->httpRequestHandler->getHeader("QueryString"),
+                this->httpRequestHandler->getHeader("Querystring"),
                 this->httpRequestHandler->getHeader("Content-Length"),
                 contentType,
                 this->httpRequestHandler->getBody()
@@ -340,7 +340,7 @@ void Webserver::handlePOST(
             this->httpRequestHandler->getHeader("User-Agent"),
             this->serverConfig->getRoot(method, route),
             this->httpRequestHandler->getHeader("Route"),
-            this->httpRequestHandler->getHeader("QueryString"),
+            this->httpRequestHandler->getHeader("Querystring"),
             this->httpRequestHandler->getHeader("Content-Length"),
             contentType,
             this->httpRequestHandler->getBody()

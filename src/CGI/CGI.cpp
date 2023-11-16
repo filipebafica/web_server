@@ -19,13 +19,17 @@ CGIResponse* CGI::execute(const CGIRequest& request) {
     int pipeFdFromChild[2];
 
     if (pipe(pipeFdToChild) == -1 || pipe(pipeFdFromChild) == -1) {
-        return new CGIResponse(500);
+        throw std::runtime_error("pipe() failed on CGI::execute");
     }
 
     pid_t pid = fork();
 
     if (pid < 0) {
-        return new CGIResponse(500);
+        throw std::runtime_error("fork() failed on CGI::execute");
+    }
+
+    if (access(CGI_PATH, F_OK | X_OK) != 0) {
+        throw std::runtime_error("Could not access php-cgi bin file on CGI::execute");
     }
 
     if (!pid) {
@@ -54,7 +58,15 @@ CGIResponse* CGI::execute(const CGIRequest& request) {
     close(pipeFdToChild[RD]);
     /* Writes request body through the pipe to the child process */
     if (request.body.size()) {
-        write(pipeFdToChild[WR], request.body.data(), request.body.size());
+        ssize_t bytes;
+
+        bytes = write(pipeFdToChild[WR], request.body.data(), request.body.size());
+        if (bytes == -1) {
+            throw std::runtime_error("write() failed on CGI::execute");
+        }
+        if (bytes == 0) {
+            throw std::runtime_error("write() wrote 0 bytes on CGI::execute");
+        }
     }
     close(pipeFdToChild[WR]);
     waitpid(pid, NULL, 0);
@@ -69,7 +81,9 @@ CGIResponse* CGI::execute(const CGIRequest& request) {
         rawCGIResponse.append(buffer);
     }
     close(pipeFdFromChild[RD]);
-
+    if (bytes == -1) {
+        throw std::runtime_error("read() failed on CGI::execute");
+    }
     return new CGIResponse(rawCGIResponse);
 }
 

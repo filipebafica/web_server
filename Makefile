@@ -41,7 +41,10 @@ FLAGS = -g -Wall -Wextra -Werror -std=c++98
 PHP_CGI_PATH := $(shell which php-cgi)
 FLAGS += -D CGI_PATH=\"$(PHP_CGI_PATH)\"
 
-all: $(NAME)
+dependencies:
+	@which php-cgi > /dev/null || sudo apt install php-cgi -y
+
+all: dependencies $(NAME)
 
 $(NAME): $(OBJECTS_DIR) $(OBJECTS)
 	@$(CC) $(FLAGS) $(OBJECTS) $(INCLUDES) -o $@

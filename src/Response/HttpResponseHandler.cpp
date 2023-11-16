@@ -20,7 +20,15 @@ void HttpResponseHandler::send(int socket,
 
     binaryContent.insert(binaryContent.begin(), str.begin(), str.end());
 
-    write(socket, binaryContent.data(), binaryContent.size());
+    ssize_t bytesWritten = write(socket, binaryContent.data(), binaryContent.size());
+
+    if (bytesWritten < 0) {
+        throw std::runtime_error("Could not write in file descriptor, some error occured");
+    }
+
+    if (bytesWritten == 0) {
+        throw std::runtime_error("Could not write in file descriptor, connection closed");
+    }
 }
 
 void HttpResponseHandler::send(int socket,
