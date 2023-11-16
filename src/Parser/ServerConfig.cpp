@@ -105,7 +105,7 @@ int ServerConfig::_selectLocationPosition(std::string route)
     }
 
     if (locationPosition == -1) {
-        throw std::runtime_error("could not select location for the given route");
+        throw RouteNotFoundException();
     }
 
     return locationPosition;
